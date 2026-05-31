@@ -2,26 +2,22 @@ import {
   System,
   type World,
   type Time,
-  type Entity,
   Transform,
   Velocity,
   CircleCollider,
-  MathUtils,
 } from "@engine";
 import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
 import { ExperienceGem } from "../components/ExperienceGem";
-import { UPGRADES } from "../data/upgrades";
 import type { GameEventBus } from "../events";
 
 /**
- * Drives the core progression loop: gems within magnet range fly to the player,
- * are collected on contact, grant XP, and trigger level-ups.
+ * Drives the core progression loop: sál orbs within magnet range fly to the
+ * player, are collected on contact, grant sál (XP), and trigger level-ups.
  *
- * On level-up the scaffold auto-applies a random upgrade and emits
- * `playerLeveledUp`. TODO: pause the simulation and present the player a choice
- * of three upgrades (the signature meta-decision of the genre) instead of
- * picking automatically.
+ * Each level-up emits `playerLeveledUp`; the scene catches it, pauses the
+ * simulation and presents the player a Kenning (rune) choice. This system does
+ * not apply the upgrade itself — the chosen rune does.
  */
 export class ExperienceSystem extends System {
   constructor(private readonly events: GameEventBus) {
@@ -48,7 +44,7 @@ export class ExperienceSystem extends System {
       // Collected?
       const pickupReach = playerRadius + 6;
       if (distSq <= pickupReach * pickupReach) {
-        this.collect(world, playerEntity, progress, gemComp.value);
+        this.collect(progress, gemComp.value);
         world.destroyEntity(gem);
         continue;
       }
@@ -67,12 +63,7 @@ export class ExperienceSystem extends System {
     }
   }
 
-  private collect(
-    world: World,
-    playerEntity: Entity,
-    progress: PlayerProgress,
-    value: number,
-  ): void {
+  private collect(progress: PlayerProgress, value: number): void {
     this.events.emit("gemCollected", { value });
     progress.xp += value;
 
@@ -81,8 +72,9 @@ export class ExperienceSystem extends System {
       progress.level += 1;
       progress.xpToNext = PlayerProgress.xpForLevel(progress.level);
 
-      // TODO: replace auto-pick with a player-facing upgrade selection UI.
-      MathUtils.randChoice(UPGRADES).apply(world, playerEntity);
+      // The Kenning choice (rune selection) is presented by the scene, which
+      // pauses the simulation until the player picks. Each level emits an event
+      // so multiple level-ups queue multiple choices.
       this.events.emit("playerLeveledUp", { level: progress.level });
     }
   }

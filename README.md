@@ -21,10 +21,17 @@ npm install
 npm run dev      # start the Vite dev server and open the demo
 npm run build    # typecheck + production build into dist/
 npm run typecheck
+npm test         # headless logic tests (serialization, runes)
 ```
 
 **Controls:** WASD / arrow keys to move. Weapons fire automatically at the
-nearest enemy. Collect green gems to gain XP and level up. Survive.
+nearest enemy. Collect sál orbs to level up — each level pauses the game and
+offers a choice of three **rune-kennings** (pick with the `1`/`2`/`3` keys or a
+click). Survive.
+
+> The demo is evolving into **DRAUGR**, a Norse vampire-survivor (see the game
+> design document). The Kenning choice is the first DRAUGR system built on the
+> engine; runes live in [`data/runes.ts`](src/game/data/runes.ts).
 
 ---
 
@@ -202,8 +209,9 @@ Everything is data-driven where it counts:
 - **Add an enemy** — append an entry to [`data/enemies.ts`](src/game/data/enemies.ts).
   The spawner and factory pick it up automatically (respecting `unlockTime`).
 - **Add a weapon** — add a blueprint to [`data/weapons.ts`](src/game/data/weapons.ts).
-- **Add an upgrade** — add an entry to [`data/upgrades.ts`](src/game/data/upgrades.ts)
-  with an `apply(world, player)` mutation.
+- **Add a rune** — add an entry to [`data/runes.ts`](src/game/data/runes.ts) with
+  a glyph, flavour line, and an `apply(world, player)` mutation. It joins the
+  Kenning choice pool automatically.
 - **Add a behaviour** — write a `System` subclass and register it in the scene.
 - **Add a component** — a plain class implementing `Component`; store it on
   entities via `world.add(entity, new MyComponent())`.
@@ -214,10 +222,9 @@ Everything is data-driven where it counts:
 
 The scaffold is intentionally a foundation. The most impactful next steps:
 
-- [ ] **Level-up upgrade selection UI** — currently the
-      [`ExperienceSystem`](src/game/systems/ExperienceSystem.ts) auto-applies a
-      random upgrade on level-up. Replace with a pause-and-choose-from-three
-      screen (the signature meta-decision of the genre).
+- [x] **Level-up choice UI** — leveling pauses the sim and offers a pick-3 of
+      rune-kennings ([`KenningScreen`](src/game/ui/KenningScreen.ts) +
+      [`data/runes.ts`](src/game/data/runes.ts)).
 - [ ] **Multiple simultaneous weapons** per player (weapon inventory).
 - [ ] **Object pooling** for projectiles/enemies/gems to cut GC pressure at high
       entity counts.

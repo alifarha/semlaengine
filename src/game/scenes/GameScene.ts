@@ -2,6 +2,7 @@ import {
   Scene,
   type EngineContext,
   type Renderer,
+  type Time,
   Transform,
   MovementSystem,
   LifetimeSystem,
@@ -20,6 +21,8 @@ import { EffectsSystem } from "../systems/EffectsSystem";
 import { RenderSystem } from "../systems/RenderSystem";
 import { EffectsRenderer } from "../systems/EffectsRenderer";
 import { Hud } from "../ui/Hud";
+import { KenningScreen } from "../ui/KenningScreen";
+import { rollKennings, type Rune } from "../data/runes";
 import { createGameEventBus, type GameEventBus } from "../events";
 import { GameOverScene } from "./GameOverScene";
 
@@ -35,7 +38,13 @@ export class GameScene extends Scene {
   private readonly renderSystem = new RenderSystem();
   private readonly effectsRenderer = new EffectsRenderer();
   private readonly hud = new Hud();
+  private readonly kenningScreen = new KenningScreen();
   private playerDead = false;
+
+  /** Pending level-ups awaiting a Kenning choice; >0 freezes the simulation. */
+  private pendingLevels = 0;
+  /** The three runes currently offered, or null when not choosing. */
+  private currentOffer: Rune[] | null = null;
 
   constructor(ctx: EngineContext) {
     super(ctx);
@@ -69,6 +78,35 @@ export class GameScene extends Scene {
     this.events.on("playerDied", () => {
       this.playerDead = true;
     });
+    // Each level-up queues a Kenning choice; the choice is resolved in update().
+    this.events.on("playerLeveledUp", () => {
+      this.pendingLevels++;
+    });
+  }
+
+  override update(time: Time): void {
+    // While a Kenning choice is pending, freeze the simulation and resolve the
+    // player's pick. Multiple queued level-ups present one choice at a time.
+    if (!this.playerDead && this.pendingLevels > 0) {
+      if (!this.currentOffer) {
+        this.currentOffer = rollKennings(3);
+        this.kenningScreen.begin();
+      }
+      const picked = this.kenningScreen.poll(
+        this.currentOffer,
+        this.ctx.input,
+        this.ctx.renderer,
+      );
+      if (picked !== null) {
+        const player = this.world.first(Player);
+        if (player >= 0) this.currentOffer[picked].apply(this.world, player);
+        this.pendingLevels--;
+        this.currentOffer = null;
+      }
+      return; // simulation paused until the choice is made
+    }
+
+    super.update(time);
   }
 
   render(renderer: Renderer, alpha: number): void {
@@ -85,6 +123,11 @@ export class GameScene extends Scene {
     renderer.end();
 
     this.hud.render(this.world, renderer, this.ctx.time.elapsed);
+
+    // The Kenning choice draws on top of the frozen world + HUD.
+    if (this.currentOffer) {
+      this.kenningScreen.render(this.currentOffer, this.ctx.input, renderer);
+    }
 
     if (this.playerDead) {
       const progress = playerEntity >= 0

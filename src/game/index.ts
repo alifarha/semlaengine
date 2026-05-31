@@ -26,7 +26,7 @@ export {
   type WeaponDef,
   type WeaponStats,
 } from "./data/weapons";
-export { UPGRADES, type UpgradeDef } from "./data/upgrades";
+export { RUNES, rollKennings, type Rune } from "./data/runes";
 
 // Events
 export { createGameEventBus, type GameEvents, type GameEventBus } from "./events";

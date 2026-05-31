@@ -1,0 +1,27 @@
+{
+  "name": "semlaengine",
+  "version": "0.1.0",
+  "description": "A 2D game engine focused on building bullet-heaven / vampire-survivor style games.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "game-engine",
+    "2d",
+    "canvas",
+    "typescript",
+    "vampire-survivors",
+    "bullet-heaven",
+    "ecs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vite": "^5.2.0"
+  }
+}

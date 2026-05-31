@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "esbuild scripts/roundtrip-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/roundtrip.mjs && node .cache/roundtrip.mjs"
   },
   "keywords": [
     "game-engine",

@@ -2,6 +2,7 @@ import {
   type Engine,
   type Entity,
   type World,
+  type WorldSerializer,
   Transform,
   CircleCollider,
 } from "@engine";
@@ -17,6 +18,11 @@ export interface EditorOptions {
   toggleKey?: string;
   /** Game data definitions to expose in the Data/Balance panel. */
   dataSources?: DataSource[];
+  /**
+   * A serializer (with the engine + game component codecs registered). When
+   * provided, the toolbar gains Save/Load buttons for the active scene's world.
+   */
+  serializer?: WorldSerializer;
 }
 
 interface ScheduledPanel {
@@ -47,6 +53,7 @@ export class Editor implements EditorContext {
   private readonly scheduled: ScheduledPanel[];
 
   private readonly toggleKey: string;
+  private readonly serializer: WorldSerializer | null;
   private visible = false;
   private _selected: Entity | null = null;
   private rafId = 0;
@@ -55,6 +62,7 @@ export class Editor implements EditorContext {
   constructor(engine: Engine, options: EditorOptions = {}) {
     this.engine = engine;
     this.toggleKey = options.toggleKey ?? "Backquote";
+    this.serializer = options.serializer ?? null;
 
     injectEditorStyles();
 
@@ -62,7 +70,10 @@ export class Editor implements EditorContext {
     this.root = document.createElement("div");
     this.root.className = "semla-editor hidden";
 
-    this.toolbar = new ToolbarPanel(this, () => this.hide());
+    this.toolbar = new ToolbarPanel(this, () => this.hide(), {
+      onSave: this.serializer ? () => this.saveScene() : undefined,
+      onLoad: this.serializer ? () => this.loadScene() : undefined,
+    });
 
     const leftDock = document.createElement("div");
     leftDock.className = "semla-dock left";
@@ -203,6 +214,44 @@ export class Editor implements EditorContext {
       }
     }
     this.select(best);
+  }
+
+  /** Serialize the active world and download it as a JSON file. */
+  private saveScene(): void {
+    const world = this.world;
+    if (!this.serializer || !world) return;
+
+    const json = this.serializer.toJSON(world);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `semla-scene-${Date.now()}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /** Pick a JSON file and replace the active world with its contents. */
+  private loadScene(): void {
+    if (!this.serializer) return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.json";
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      file
+        .text()
+        .then((text) => {
+          const world = this.world;
+          if (!world || !this.serializer) return;
+          this.serializer.fromJSON(world, text);
+          this.select(null); // previous selection ids are no longer valid
+        })
+        .catch((err) => console.error("Semla: failed to load scene", err));
+    });
+    input.click();
   }
 
   /** Draw a ring around the selected entity (screen space, post-scene). */

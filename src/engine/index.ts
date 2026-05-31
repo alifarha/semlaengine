@@ -49,3 +49,15 @@ export { Camera } from "./rendering/Camera";
 export { InputManager } from "./input/InputManager";
 export { AssetLoader } from "./assets/AssetLoader";
 export { SpatialHashGrid } from "./physics/SpatialHashGrid";
+
+// Serialization
+export {
+  ComponentRegistry,
+  type ComponentCodec,
+} from "./serialization/ComponentRegistry";
+export {
+  WorldSerializer,
+  type SerializedWorld,
+  type SerializedEntity,
+} from "./serialization/WorldSerializer";
+export { registerBuiltinComponents } from "./serialization/builtinComponents";

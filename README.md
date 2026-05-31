@@ -55,7 +55,8 @@ src/
 │   ├── rendering/            # Renderer (canvas) + Camera
 │   ├── input/                # InputManager (keyboard + pointer)
 │   ├── assets/               # AssetLoader (images)
-│   └── physics/              # SpatialHashGrid (broadphase)
+│   ├── physics/              # SpatialHashGrid (broadphase)
+│   └── serialization/        # ComponentRegistry + WorldSerializer (save/load)
 ├── game/                     # the vampire-survivor game
 │   ├── components/           # Player, Enemy, Weapon, Projectile, gems, progress
 │   ├── systems/              # control, AI, spawning, weapons, collision, XP…
@@ -105,7 +106,8 @@ separate mode — so you can tweak the game while it plays.
 What's in the shell:
 
 - **Toolbar** — play / pause, single-step (advance one fixed tick at a time), a
-  time-scale slider (slow-mo → 3× fast-forward), and live FPS + entity counts.
+  time-scale slider (slow-mo → 3× fast-forward), **Save / Load** (download/restore
+  the world as JSON), and live FPS + entity counts.
 - **Hierarchy** — every live entity, grouped by type with counts (the swarm is
   capped to a readable list). Click to select.
 - **Inspector** — the selected entity's components with **editable fields**.
@@ -113,9 +115,10 @@ What's in the shell:
   player's `moveSpeed` or its `Weapon.cooldown` is reflected on the very next
   frame. Click an entity directly on the canvas to pick it; the selection is
   ringed in the viewport.
-- **Data / Balance** — edit content definitions (e.g. enemy `health`, `speed`,
-  `contactDamage`) live; because the spawner reads definitions at spawn time,
-  changes apply to subsequent waves. Great for balancing without a rebuild.
+- **Data / Balance** — edit content definitions for **enemies** (`health`,
+  `speed`, `contactDamage`…) and **weapons** (`cooldown`, `damage`, `count`…)
+  live. Because content is read at spawn/build time, changes apply to subsequent
+  waves and newly-equipped weapons — balancing without a rebuild.
 
 ### How it plugs in
 
@@ -146,6 +149,20 @@ useful beyond the editor:
 
 Add your own panel by extending
 [`EditorPanel`](src/editor/EditorPanel.ts) and appending it in `Editor`.
+
+### Scene save/load
+
+The Save/Load buttons round-trip the active world through
+[`WorldSerializer`](src/engine/serialization/WorldSerializer.ts). Each component
+type registers a small codec on a
+[`ComponentRegistry`](src/engine/serialization/ComponentRegistry.ts) describing
+how it converts to/from JSON — the engine registers its built-ins
+(`registerBuiltinComponents`) and the game registers its own
+(`registerGameComponents`). Entity ids aren't persisted because components hold
+no cross-entity references, so loading recreates entities with fresh ids and no
+remapping. A round-trip test lives in
+[`scripts/roundtrip-test.mts`](scripts/roundtrip-test.mts) — run it with
+`npm test`.
 
 ### The simulation pipeline
 
@@ -192,12 +209,13 @@ The scaffold is intentionally a foundation. The most impactful next steps:
 - [ ] **Persistence / meta-progression** between runs.
 - [ ] **Responsive canvas** — handle window resize and DPI scaling.
 
-Editor next steps:
+Editor:
 
-- [ ] **Scene save/load** — serialize the world to JSON and a place-entities tool.
+- [x] **Scene save/load** — serialize the world to/from JSON.
+- [x] **Data-driven weapons** — weapon stats are tunable in the Data panel.
+- [ ] **Place-entities tool** — click to spawn entities from a palette into the
+      world (building on save/load).
 - [ ] **Add-component / add-entity** actions in the Inspector.
-- [ ] **Weapon data source** — make weapon stats data-driven so they're tunable
-      in the Data panel (today they're tuned via the player's live `Weapon`).
 - [ ] **Undo/redo** for edits.
 
 ---

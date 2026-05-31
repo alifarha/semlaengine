@@ -19,8 +19,17 @@ export { PlayerProgress } from "./components/PlayerProgress";
 
 // Data
 export { ENEMIES, ENEMY_LIST, type EnemyDef } from "./data/enemies";
-export { WEAPONS, STARTING_WEAPON, type WeaponDef } from "./data/weapons";
+export {
+  WEAPONS,
+  STARTING_WEAPON,
+  weaponFromDef,
+  type WeaponDef,
+  type WeaponStats,
+} from "./data/weapons";
 export { UPGRADES, type UpgradeDef } from "./data/upgrades";
 
 // Events
 export { createGameEventBus, type GameEvents, type GameEventBus } from "./events";
+
+// Serialization
+export { registerGameComponents } from "./serialization";

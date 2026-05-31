@@ -10,7 +10,7 @@ import {
 } from "@engine";
 import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
-import { STARTING_WEAPON } from "../data/weapons";
+import { STARTING_WEAPON, weaponFromDef } from "../data/weapons";
 
 /** Spawn the player at a world position with its starting weapon. */
 export function createPlayer(world: World, x: number, y: number): Entity {
@@ -20,7 +20,7 @@ export function createPlayer(world: World, x: number, y: number): Entity {
   world.add(player, new Player());
   world.add(player, new PlayerProgress());
   world.add(player, new Health(100, 0.5));
-  world.add(player, STARTING_WEAPON.create());
+  world.add(player, weaponFromDef(STARTING_WEAPON));
   world.add(
     player,
     new Sprite({ shape: "circle", width: 18, height: 18, color: "#ffd166", layer: 10 }),

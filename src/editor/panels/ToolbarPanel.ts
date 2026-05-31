@@ -20,6 +20,7 @@ export class ToolbarPanel {
   constructor(
     private readonly ctx: EditorContext,
     onClose: () => void,
+    hooks: { onSave?: () => void; onLoad?: () => void } = {},
   ) {
     const { engine } = ctx;
     this.element = document.createElement("div");
@@ -67,10 +68,10 @@ export class ToolbarPanel {
       document.createTextNode("speed"),
       scale,
       this.scaleLabel,
-      spacer,
-      this.stats,
-      closeBtn,
     );
+    if (hooks.onSave) this.element.appendChild(button("Save", hooks.onSave));
+    if (hooks.onLoad) this.element.appendChild(button("Load", hooks.onLoad));
+    this.element.append(spacer, this.stats, closeBtn);
 
     this.syncPlay();
     this.syncScale();

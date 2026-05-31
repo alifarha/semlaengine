@@ -1,14 +1,26 @@
 import { Weapon } from "../components/Weapon";
 
 /**
- * Weapon definitions. Each returns a fresh {@link Weapon} component so the same
- * blueprint can arm multiple entities without shared mutable state.
+ * Tunable weapon stats, stored as plain data so they can be edited live (e.g. in
+ * the editor's Data/Balance panel) and serialized. {@link weaponFromDef} builds
+ * a fresh {@link Weapon} component from these — each armed entity gets its own
+ * copy, so the same blueprint can equip many entities without shared state.
  */
+export interface WeaponStats {
+  cooldown: number;
+  damage: number;
+  projectileSpeed: number;
+  projectileLifetime: number;
+  pierce: number;
+  count: number;
+}
+
 export interface WeaponDef {
   readonly id: string;
   readonly name: string;
   readonly description: string;
-  readonly create: () => Weapon;
+  /** Mutable so tools can tune balance; changes apply to weapons built later. */
+  readonly stats: WeaponStats;
 }
 
 export const WEAPONS: Record<string, WeaponDef> = {
@@ -16,30 +28,33 @@ export const WEAPONS: Record<string, WeaponDef> = {
     id: "bolt",
     name: "Magic Bolt",
     description: "Fires a bolt at the nearest enemy.",
-    create: () =>
-      new Weapon({
-        cooldown: 0.7,
-        damage: 10,
-        projectileSpeed: 280,
-        projectileLifetime: 1.4,
-        pierce: 1,
-        count: 1,
-      }),
+    stats: {
+      cooldown: 0.7,
+      damage: 10,
+      projectileSpeed: 280,
+      projectileLifetime: 1.4,
+      pierce: 1,
+      count: 1,
+    },
   },
   spread: {
     id: "spread",
     name: "Scatter Shot",
     description: "Launches several bolts in a fan.",
-    create: () =>
-      new Weapon({
-        cooldown: 1.1,
-        damage: 7,
-        projectileSpeed: 240,
-        projectileLifetime: 1.0,
-        pierce: 1,
-        count: 3,
-      }),
+    stats: {
+      cooldown: 1.1,
+      damage: 7,
+      projectileSpeed: 240,
+      projectileLifetime: 1.0,
+      pierce: 1,
+      count: 3,
+    },
   },
 };
+
+/** Build a fresh Weapon component from a definition's stats. */
+export function weaponFromDef(def: WeaponDef): Weapon {
+  return new Weapon({ ...def.stats });
+}
 
 export const STARTING_WEAPON = WEAPONS.bolt;

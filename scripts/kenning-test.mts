@@ -3,10 +3,11 @@
  * rune effects to the player. DOM-free — bundled with esbuild and run on node.
  */
 import { World, Health } from "@engine";
-import { RUNES, rollKennings } from "@game";
+import { RUNES, rollKennings, formForFullness, FormState } from "@game";
 import { createPlayer } from "@game/entities/createPlayer";
 import { Player } from "@game/components/Player";
 import { Weapon } from "@game/components/Weapon";
+import { DraugrForm } from "@game/components/DraugrForm";
 
 let failures = 0;
 function check(label: string, cond: boolean): void {
@@ -54,6 +55,14 @@ const max0 = h.max;
 runeById("algiz").apply(world, player);
 check("Algiz raises max vigour", h.max === max0 + 25);
 check("Algiz mends current vigour", h.current === 35);
+
+// --- Draugr form thresholds ---
+check("0.05 fullness -> Starving (-30% dmg)", formForFullness(0.05).state === FormState.Starving && formForFullness(0.05).damageMul === 0.7);
+check("0.40 fullness -> Risen (normal)", formForFullness(0.4).state === FormState.Risen && formForFullness(0.4).damageMul === 1);
+check("0.70 fullness -> Gorged (+15% dmg)", formForFullness(0.7).state === FormState.Gorged && formForFullness(0.7).damageMul === 1.15);
+check("0.95 fullness -> Barrow-King (+35% dmg)", formForFullness(0.95).state === FormState.BarrowKing && formForFullness(0.95).damageMul === 1.35);
+check("Gorged widens aura", formForFullness(0.7).auraMul > 1);
+check("player starts with a DraugrForm", world.get(player, DraugrForm) !== undefined);
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed`);

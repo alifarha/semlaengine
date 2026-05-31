@@ -9,6 +9,7 @@ import {
 import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
 import { ExperienceGem } from "../components/ExperienceGem";
+import { DraugrForm } from "../components/DraugrForm";
 import type { GameEventBus } from "../events";
 
 /**
@@ -33,7 +34,10 @@ export class ExperienceSystem extends System {
     const playerRadius = world.get(playerEntity, CircleCollider)?.radius ?? 9;
     const progress = world.get(playerEntity, PlayerProgress)!;
 
-    const magnetSq = player.magnetRadius * player.magnetRadius;
+    // Gorged/Barrow-King forms widen the sál-drawing aura.
+    const auraMul = world.get(playerEntity, DraugrForm)?.auraMul ?? 1;
+    const magnet = player.magnetRadius * auraMul;
+    const magnetSq = magnet * magnet;
 
     for (const gem of world.query(ExperienceGem, Transform, Velocity)) {
       const gemComp = world.get(gem, ExperienceGem)!;

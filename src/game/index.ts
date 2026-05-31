@@ -16,6 +16,12 @@ export { Weapon } from "./components/Weapon";
 export { Projectile } from "./components/Projectile";
 export { ExperienceGem } from "./components/ExperienceGem";
 export { PlayerProgress } from "./components/PlayerProgress";
+export {
+  DraugrForm,
+  FormState,
+  formForFullness,
+  type FormProfile,
+} from "./components/DraugrForm";
 
 // Data
 export { ENEMIES, ENEMY_LIST, type EnemyDef } from "./data/enemies";

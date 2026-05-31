@@ -17,6 +17,7 @@ import { createEnemy } from "@game/entities/createEnemy";
 import { Player } from "@game/components/Player";
 import { Weapon } from "@game/components/Weapon";
 import { PlayerProgress } from "@game/components/PlayerProgress";
+import { DraugrForm } from "@game/components/DraugrForm";
 import { ENEMIES } from "@game/data/enemies";
 
 let failures = 0;
@@ -40,6 +41,7 @@ const prog = world.get(player, PlayerProgress)!;
 prog.level = 7;
 prog.kills = 99;
 world.get(player, Velocity)!.value.set(5, -8);
+world.get(player, DraugrForm)!.fullness = 0.83;
 
 createEnemy(world, ENEMIES.bat, 100, 200);
 createEnemy(world, ENEMIES.zombie, -50, 60);
@@ -74,6 +76,7 @@ const rProg = restored.get(rPlayer, PlayerProgress)!;
 check("progress preserved", rProg.level === 7 && rProg.kills === 99);
 const rVel = restored.get(rPlayer, Velocity)!;
 check("velocity preserved", rVel.value.x === 5 && rVel.value.y === -8);
+check("draugr fullness preserved", Math.abs(restored.get(rPlayer, DraugrForm)!.fullness - 0.83) < 1e-6);
 
 // Re-serializing the restored world should produce identical JSON (stable).
 check("re-serialization is stable", serializer.toJSON(restored) === json);

@@ -13,6 +13,7 @@ export type GameEvents = {
   playerLeveledUp: { level: number };
   playerDamaged: { amount: number; remaining: number };
   playerDied: void;
+  draugrFormChanged: { state: string; ascending: boolean };
 };
 
 export type GameEventBus = EventEmitter<GameEvents>;

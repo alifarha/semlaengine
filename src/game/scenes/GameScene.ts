@@ -11,6 +11,7 @@ import { createPlayer } from "../entities/createPlayer";
 import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
 import { PlayerControlSystem } from "../systems/PlayerControlSystem";
+import { DraugrFormSystem } from "../systems/DraugrFormSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { EnemySpawnSystem } from "../systems/EnemySpawnSystem";
 import { CollisionSystem } from "../systems/CollisionSystem";
@@ -58,6 +59,7 @@ export class GameScene extends Scene {
 
     // Simulation pipeline (order matters — see class doc).
     this.addSystem(new PlayerControlSystem(this.ctx.input));
+    this.addSystem(new DraugrFormSystem(this.events));
     this.addSystem(new EnemyAISystem());
     this.addSystem(new EnemySpawnSystem());
     this.addSystem(new WeaponSystem(this.events));

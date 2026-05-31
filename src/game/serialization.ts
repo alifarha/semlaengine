@@ -5,6 +5,7 @@ import { Weapon } from "./components/Weapon";
 import { Projectile } from "./components/Projectile";
 import { ExperienceGem } from "./components/ExperienceGem";
 import { PlayerProgress } from "./components/PlayerProgress";
+import { DraugrForm } from "./components/DraugrForm";
 
 function num(data: unknown, key: string, fallback = 0): number {
   const value = (data as Record<string, unknown>)[key];
@@ -84,6 +85,19 @@ export function registerGameComponents(registry: ComponentRegistry): void {
       const gem = new ExperienceGem(num(d, "value", 1));
       gem.attracted = bool(d, "attracted");
       return gem;
+    },
+  });
+
+  registry.register({
+    name: "DraugrForm",
+    type: DraugrForm,
+    // Only fullness is persisted; state/multipliers are recomputed on the next
+    // form-system tick from the thresholds.
+    serialize: (f) => ({ fullness: f.fullness }),
+    deserialize: (d) => {
+      const f = new DraugrForm();
+      f.fullness = num(d, "fullness", 0.4);
+      return f;
     },
   });
 

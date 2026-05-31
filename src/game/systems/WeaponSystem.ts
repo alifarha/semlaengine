@@ -2,6 +2,7 @@ import { System, type World, type Time, Transform, Vector2 } from "@engine";
 import { Player } from "../components/Player";
 import { Weapon } from "../components/Weapon";
 import { Enemy } from "../components/Enemy";
+import { DraugrForm } from "../components/DraugrForm";
 import { createProjectile } from "../entities/createProjectile";
 import type { GameEventBus } from "../events";
 
@@ -36,7 +37,8 @@ export class WeaponSystem extends System {
 
       this.aim.set(target.x - origin.x, target.y - origin.y).normalize();
       const baseAngle = this.aim.angle();
-      const damage = weapon.damage * player.might;
+      const formMul = world.get(entity, DraugrForm)?.damageMul ?? 1;
+      const damage = weapon.damage * player.might * formMul;
 
       // Spread projectiles across a ~30° fan centred on the aim direction.
       const spread = Math.PI / 6;

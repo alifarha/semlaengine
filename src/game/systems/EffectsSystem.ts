@@ -106,6 +106,23 @@ export class EffectsSystem extends System {
       camera.addTrauma(1);
       audio.tone({ freq: 320, slideTo: 50, duration: 0.7, type: "sawtooth", gain: 0.3 });
     });
+
+    this.events.on("draugrFormChanged", ({ state, ascending }) => {
+      if (!ascending) return; // only celebrate growing, not waning
+      const player = world.first(Player, Transform);
+      if (player >= 0) {
+        const pos = world.get(player, Transform)!.position;
+        spawnFloatingText(world, pos.x, pos.y - 16, state.toUpperCase(), "#8fb6ff", 14, 0.9);
+        spawnParticleBurst(world, pos.x, pos.y, {
+          count: 10,
+          color: "#8fb6ff",
+          speed: 130,
+          life: 0.5,
+        });
+      }
+      camera.addTrauma(state === "Barrow-King" ? 0.5 : 0.2);
+      audio.tone({ freq: 392, slideTo: 588, duration: 0.18, type: "sawtooth", gain: 0.16 });
+    });
   }
 
   update(world: World, time: Time): void {

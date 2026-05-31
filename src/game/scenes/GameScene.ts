@@ -14,6 +14,7 @@ import { PlayerControlSystem } from "../systems/PlayerControlSystem";
 import { DraugrFormSystem } from "../systems/DraugrFormSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { EnemySpawnSystem } from "../systems/EnemySpawnSystem";
+import { BossSystem } from "../systems/BossSystem";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { WeaponSystem } from "../systems/WeaponSystem";
 import { ExperienceSystem } from "../systems/ExperienceSystem";
@@ -61,6 +62,9 @@ export class GameScene extends Scene {
     this.addSystem(new PlayerControlSystem(this.ctx.input));
     this.addSystem(new DraugrFormSystem(this.events));
     this.addSystem(new EnemyAISystem());
+    // BossSystem runs after the generic enemy AI so it can override Hati's
+    // velocity with flanking movement.
+    this.addSystem(new BossSystem(this.events));
     this.addSystem(new EnemySpawnSystem());
     this.addSystem(new WeaponSystem(this.events));
     this.addSystem(new MovementSystem());

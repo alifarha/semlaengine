@@ -6,6 +6,7 @@ import { Projectile } from "./components/Projectile";
 import { ExperienceGem } from "./components/ExperienceGem";
 import { PlayerProgress } from "./components/PlayerProgress";
 import { DraugrForm } from "./components/DraugrForm";
+import { Boss, type BossRole } from "./components/Boss";
 
 function num(data: unknown, key: string, fallback = 0): number {
   const value = (data as Record<string, unknown>)[key];
@@ -75,6 +76,21 @@ export function registerGameComponents(registry: ComponentRegistry): void {
     type: Projectile,
     serialize: (p) => ({ damage: p.damage, pierceRemaining: p.pierceRemaining }),
     deserialize: (d) => new Projectile(num(d, "damage"), num(d, "pierceRemaining", 1)),
+  });
+
+  registry.register({
+    name: "Boss",
+    type: Boss,
+    serialize: (b) => ({ name: b.name, role: b.role, enraged: b.enraged }),
+    deserialize: (d) => {
+      const data = d as Record<string, unknown>;
+      const b = new Boss(
+        typeof data.name === "string" ? data.name : "Boss",
+        (data.role === "hati" ? "hati" : "skoll") as BossRole,
+      );
+      b.enraged = bool(d, "enraged");
+      return b;
+    },
   });
 
   registry.register({

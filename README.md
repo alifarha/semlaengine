@@ -29,9 +29,16 @@ nearest enemy. Collect sál orbs to level up — each level pauses the game and
 offers a choice of three **rune-kennings** (pick with the `1`/`2`/`3` keys or a
 click). Survive.
 
+Your draugr's **form** rises as you drink sál (Risen → Gorged → Barrow-King for
+escalating power) and decays if you stop killing (down to Starving, −30% damage)
+— watch the form badge above the vigour bar. Around the one-minute mark, the
+wolves **Sköll & Hati** appear: Sköll pursues while Hati flanks, and Hati enrages
+when Sköll falls.
+
 > The demo is evolving into **DRAUGR**, a Norse vampire-survivor (see the game
-> design document). The Kenning choice is the first DRAUGR system built on the
-> engine; runes live in [`data/runes.ts`](src/game/data/runes.ts).
+> design document). Built so far on the engine: the Kenning rune choice
+> ([`data/runes.ts`](src/game/data/runes.ts)), draugr form states, and the first
+> boss encounter.
 
 ---
 
@@ -233,7 +240,11 @@ The scaffold is intentionally a foundation. The most impactful next steps:
 - [x] **Audio** — `AudioManager` synthesizes SFX off the gameplay event bus.
 - [x] **Game feel / juice** — screen shake, hit flashes, damage numbers, kill
       particles (see `EffectsSystem`).
-- [ ] **Boss / elite enemies and wave scripting.**
+- [x] **Draugr form states** — sál-fed Starving/Risen/Gorged/Barrow-King with
+      stat + body changes ([`DraugrFormSystem`](src/game/systems/DraugrFormSystem.ts)).
+- [x] **First boss** — Sköll & Hati: timed spawn, Hati's flanking AI, rage when
+      Sköll falls ([`BossSystem`](src/game/systems/BossSystem.ts)).
+- [ ] **More bosses, elites, and wave scripting** (realm lords, Ragnarök).
 - [ ] **Persistence / meta-progression** between runs.
 - [ ] **Responsive canvas** — handle window resize and DPI scaling.
 

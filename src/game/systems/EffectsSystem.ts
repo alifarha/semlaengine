@@ -107,6 +107,26 @@ export class EffectsSystem extends System {
       audio.tone({ freq: 320, slideTo: 50, duration: 0.7, type: "sawtooth", gain: 0.3 });
     });
 
+    this.events.on("bossSpawned", ({ name }) => {
+      const player = world.first(Player, Transform);
+      if (player >= 0) {
+        const pos = world.get(player, Transform)!.position;
+        spawnFloatingText(world, pos.x, pos.y - 28, name.toUpperCase(), "#c0392b", 18, 1.8);
+      }
+      camera.addTrauma(0.6);
+      audio.tone({ freq: 90, slideTo: 58, duration: 0.6, type: "sawtooth", gain: 0.28 });
+    });
+
+    this.events.on("bossDefeated", () => {
+      const player = world.first(Player, Transform);
+      if (player >= 0) {
+        const pos = world.get(player, Transform)!.position;
+        spawnFloatingText(world, pos.x, pos.y - 28, "THE WOLVES FALL", "#d4af6a", 18, 2.0);
+      }
+      camera.addTrauma(0.5);
+      audio.tone({ freq: 300, slideTo: 520, duration: 0.4, type: "square", gain: 0.2 });
+    });
+
     this.events.on("draugrFormChanged", ({ state, ascending }) => {
       if (!ascending) return; // only celebrate growing, not waning
       const player = world.first(Player, Transform);

@@ -2,6 +2,7 @@ import { type World, type Renderer, Health } from "@engine";
 import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
 import { DraugrForm, FormState } from "../components/DraugrForm";
+import { Boss } from "../components/Boss";
 
 /** Colour the form badge + sál bar take per draugr form. */
 const FORM_COLOR: Record<string, string> = {
@@ -46,6 +47,29 @@ export class Hud {
     if (progress) {
       ctx.textAlign = "right";
       ctx.fillText(`Kills ${progress.kills}`, renderer.width - 12, 16);
+    }
+
+    // --- Boss health bars (top-centre, when an encounter is active) ---
+    const bosses = world.queryArray(Boss, Health);
+    if (bosses.length > 0) {
+      const bw = 320;
+      const bx = (renderer.width - bw) / 2;
+      let by = 34;
+      for (const e of bosses) {
+        const boss = world.get(e, Boss)!;
+        const health = world.get(e, Health)!;
+        ctx.fillStyle = "#2a0d12";
+        ctx.fillRect(bx, by, bw, 9);
+        ctx.fillStyle = boss.enraged ? "#c0392b" : "#b8922a";
+        ctx.fillRect(bx, by, bw * Math.max(0, health.current / health.max), 9);
+        ctx.fillStyle = "#e8e8f0";
+        ctx.font = "10px Georgia, serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText(boss.enraged ? `${boss.name} — enraged` : boss.name, renderer.width / 2, by - 1);
+        by += 24;
+      }
+      ctx.textBaseline = "top";
     }
 
     if (playerEntity < 0) return;

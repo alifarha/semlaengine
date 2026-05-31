@@ -12,6 +12,7 @@ export { GameOverScene, type RunSummary } from "./scenes/GameOverScene";
 // Components
 export { Player } from "./components/Player";
 export { Enemy } from "./components/Enemy";
+export { Boss, type BossRole } from "./components/Boss";
 export { Weapon } from "./components/Weapon";
 export { Projectile } from "./components/Projectile";
 export { ExperienceGem } from "./components/ExperienceGem";

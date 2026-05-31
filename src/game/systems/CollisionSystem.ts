@@ -11,6 +11,7 @@ import {
 import { Player } from "../components/Player";
 import { Enemy } from "../components/Enemy";
 import { Projectile } from "../components/Projectile";
+import type { GameEventBus } from "../events";
 
 /**
  * Resolves the two combat interactions every frame using a broadphase grid:
@@ -20,11 +21,16 @@ import { Projectile } from "../components/Projectile";
  * Enemies are bucketed into a {@link SpatialHashGrid} once, then both passes
  * query only nearby cells — keeping this near O(n) even with a large swarm.
  * Death is not handled here; zeroed health is reaped by `DeathSystem`, which
- * keeps damage and death-effects cleanly separated.
+ * keeps damage and death-effects cleanly separated. Hit/damage events are
+ * emitted so the effects + audio systems can react (flashes, numbers, SFX).
  */
 export class CollisionSystem extends System {
   private readonly grid = new SpatialHashGrid(48);
   private readonly candidates: Entity[] = [];
+
+  constructor(private readonly events: GameEventBus) {
+    super();
+  }
 
   update(world: World, time: Time): void {
     this.rebuildEnemyGrid(world);
@@ -57,6 +63,14 @@ export class CollisionSystem extends System {
         const health = world.get(enemy, Health);
         if (health) health.current -= projectile.damage;
 
+        this.events.emit("enemyDamaged", {
+          entity: enemy,
+          x: enemyPos.x,
+          y: enemyPos.y,
+          amount: projectile.damage,
+          killed: health ? health.current <= 0 : false,
+        });
+
         if (--projectile.pierceRemaining <= 0) {
           world.destroyEntity(proj);
           break;
@@ -85,8 +99,10 @@ export class CollisionSystem extends System {
       const reach = radius + enemyRadius;
       if (pos.distanceToSq(enemyPos) > reach * reach) continue;
 
-      health.current -= world.get(enemy, Enemy)!.contactDamage;
+      const damage = world.get(enemy, Enemy)!.contactDamage;
+      health.current -= damage;
       health.invulnerable = health.invulnerabilityDuration;
+      this.events.emit("playerDamaged", { amount: damage, remaining: health.current });
       break; // one hit per i-frame window
     }
   }

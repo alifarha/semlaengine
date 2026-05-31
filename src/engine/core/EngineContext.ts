@@ -1,6 +1,7 @@
 import type { Renderer } from "../rendering/Renderer";
 import type { InputManager } from "../input/InputManager";
 import type { AssetLoader } from "../assets/AssetLoader";
+import type { AudioManager } from "../audio/AudioManager";
 import type { Time } from "./Time";
 import type { SceneManager } from "./SceneManager";
 
@@ -12,6 +13,7 @@ export interface EngineContext {
   readonly renderer: Renderer;
   readonly input: InputManager;
   readonly assets: AssetLoader;
+  readonly audio: AudioManager;
   readonly time: Time;
   readonly scenes: SceneManager;
 }

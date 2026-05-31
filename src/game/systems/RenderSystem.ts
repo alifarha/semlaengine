@@ -5,6 +5,7 @@ import {
   Transform,
   Sprite,
 } from "@engine";
+import { Flash } from "../components/Flash";
 
 /**
  * Draws every entity that has a {@link Transform} and {@link Sprite}.
@@ -42,6 +43,10 @@ export class RenderSystem {
         transform.previousPosition.y +
         (transform.position.y - transform.previousPosition.y) * alpha;
 
+      // A Flash component overrides the draw color for a brief hit "pop".
+      const flash = world.get(entity, Flash);
+      const color = flash && flash.remaining > 0 ? flash.color : sprite.color;
+
       if (sprite.image) {
         renderer.drawImage(
           sprite.image,
@@ -56,9 +61,9 @@ export class RenderSystem {
           sprite.alpha,
         );
       } else if (sprite.shape === "circle") {
-        renderer.drawCircle(x, y, sprite.width / 2, sprite.color, sprite.alpha);
+        renderer.drawCircle(x, y, sprite.width / 2, color, sprite.alpha);
       } else {
-        renderer.drawRect(x, y, sprite.width, sprite.height, sprite.color, sprite.alpha);
+        renderer.drawRect(x, y, sprite.width, sprite.height, color, sprite.alpha);
       }
     }
   }

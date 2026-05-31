@@ -55,6 +55,7 @@ src/
 │   ├── rendering/            # Renderer (canvas) + Camera
 │   ├── input/                # InputManager (keyboard + pointer)
 │   ├── assets/               # AssetLoader (images)
+│   ├── audio/                # AudioManager (procedural Web Audio SFX)
 │   ├── physics/              # SpatialHashGrid (broadphase)
 │   └── serialization/        # ComponentRegistry + WorldSerializer (save/load)
 ├── game/                     # the vampire-survivor game
@@ -94,6 +95,24 @@ cells so collision checks only consider nearby candidates — turning the naive
 O(n²) all-pairs test into roughly O(n).
 [`CollisionSystem`](src/game/systems/CollisionSystem.ts) rebuilds the grid each
 frame and resolves projectile→enemy and enemy→player interactions against it.
+
+### Game feel & audio
+
+Impact is driven entirely off the gameplay event bus, so it stays decoupled
+from combat logic. [`EffectsSystem`](src/game/systems/EffectsSystem.ts)
+subscribes to events and produces:
+
+- **Screen shake** — events add "trauma" to the [`Camera`](src/engine/rendering/Camera.ts);
+  the offset scales with trauma² (subtle taps, punchy big hits) and decays over time.
+- **Hit flashes** — a brief `Flash` component tints an entity white/red on hit.
+- **Floating damage numbers** and "LEVEL UP!" popups (world-space text).
+- **Particle bursts** on kills and player hits.
+- **Procedural SFX** — [`AudioManager`](src/engine/audio/AudioManager.ts)
+  synthesizes tones and noise bursts via the Web Audio API, so there are zero
+  audio assets to ship. (It unlocks on the first input per browser autoplay rules.)
+
+Transient effect entities are tagged `Transient` so the serializer never saves
+them. Removing `EffectsSystem` strips all juice + audio without touching combat.
 
 ---
 
@@ -204,7 +223,9 @@ The scaffold is intentionally a foundation. The most impactful next steps:
       entity counts.
 - [ ] **Sprite/animation support** — `Sprite` already supports images and sprite
       sheets; add an `Animator` component + system and wire up `AssetLoader`.
-- [ ] **Audio** — an `AudioManager` subscribing to the gameplay event bus.
+- [x] **Audio** — `AudioManager` synthesizes SFX off the gameplay event bus.
+- [x] **Game feel / juice** — screen shake, hit flashes, damage numbers, kill
+      particles (see `EffectsSystem`).
 - [ ] **Boss / elite enemies and wave scripting.**
 - [ ] **Persistence / meta-progression** between runs.
 - [ ] **Responsive canvas** — handle window resize and DPI scaling.

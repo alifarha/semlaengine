@@ -1,4 +1,5 @@
 import type { World } from "../ecs/World";
+import { Transient } from "../ecs/components/Transient";
 import type { ComponentRegistry } from "./ComponentRegistry";
 
 export interface SerializedEntity {
@@ -27,6 +28,7 @@ export class WorldSerializer {
   serialize(world: World): SerializedWorld {
     const entities: SerializedEntity[] = [];
     for (const entity of world.liveEntities()) {
+      if (world.has(entity, Transient)) continue; // skip ephemeral effects
       const components: Record<string, unknown> = {};
       let serializedAny = false;
       for (const { type, component } of world.componentsOf(entity)) {

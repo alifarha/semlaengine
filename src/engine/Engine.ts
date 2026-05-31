@@ -3,6 +3,7 @@ import { SceneManager } from "./core/SceneManager";
 import { Renderer } from "./rendering/Renderer";
 import { InputManager } from "./input/InputManager";
 import { AssetLoader } from "./assets/AssetLoader";
+import { AudioManager } from "./audio/AudioManager";
 import type { EngineContext } from "./core/EngineContext";
 import type { Scene } from "./core/Scene";
 
@@ -26,6 +27,7 @@ export class Engine {
   readonly renderer: Renderer;
   readonly input: InputManager;
   readonly assets: AssetLoader;
+  readonly audio: AudioManager;
   readonly scenes: SceneManager;
   readonly context: EngineContext;
 
@@ -36,6 +38,8 @@ export class Engine {
     this.renderer = new Renderer(options.canvas);
     this.input = new InputManager(options.canvas);
     this.assets = new AssetLoader();
+    this.audio = new AudioManager();
+    this.audio.unlockOnGesture();
     this.scenes = new SceneManager();
 
     this.loop = new GameLoop({
@@ -53,6 +57,7 @@ export class Engine {
       renderer: this.renderer,
       input: this.input,
       assets: this.assets,
+      audio: this.audio,
       time: this.loop.getTime(),
       scenes: this.scenes,
     };

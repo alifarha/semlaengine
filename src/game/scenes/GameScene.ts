@@ -16,7 +16,9 @@ import { CollisionSystem } from "../systems/CollisionSystem";
 import { WeaponSystem } from "../systems/WeaponSystem";
 import { ExperienceSystem } from "../systems/ExperienceSystem";
 import { DeathSystem } from "../systems/DeathSystem";
+import { EffectsSystem } from "../systems/EffectsSystem";
 import { RenderSystem } from "../systems/RenderSystem";
+import { EffectsRenderer } from "../systems/EffectsRenderer";
 import { Hud } from "../ui/Hud";
 import { createGameEventBus, type GameEventBus } from "../events";
 import { GameOverScene } from "./GameOverScene";
@@ -31,6 +33,7 @@ import { GameOverScene } from "./GameOverScene";
 export class GameScene extends Scene {
   private readonly events: GameEventBus = createGameEventBus();
   private readonly renderSystem = new RenderSystem();
+  private readonly effectsRenderer = new EffectsRenderer();
   private readonly hud = new Hud();
   private playerDead = false;
 
@@ -48,12 +51,15 @@ export class GameScene extends Scene {
     this.addSystem(new PlayerControlSystem(this.ctx.input));
     this.addSystem(new EnemyAISystem());
     this.addSystem(new EnemySpawnSystem());
-    this.addSystem(new WeaponSystem());
+    this.addSystem(new WeaponSystem(this.events));
     this.addSystem(new MovementSystem());
-    this.addSystem(new CollisionSystem());
+    this.addSystem(new CollisionSystem(this.events));
     this.addSystem(new ExperienceSystem(this.events));
     this.addSystem(new DeathSystem(this.events));
     this.addSystem(new LifetimeSystem());
+    // Effects last: it reacts to events emitted earlier this step and advances
+    // the transient particle/text/flash entities those events spawn.
+    this.addSystem(new EffectsSystem(this.events, this.ctx));
 
     // Run-state bookkeeping via events.
     this.events.on("enemyKilled", () => {
@@ -75,6 +81,7 @@ export class GameScene extends Scene {
     renderer.begin();
     renderer.drawGrid(64, "#1e1e2e");
     this.renderSystem.render(this.world, renderer, alpha);
+    this.effectsRenderer.render(this.world, renderer);
     renderer.end();
 
     this.hud.render(this.world, renderer, this.ctx.time.elapsed);

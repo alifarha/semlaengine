@@ -14,6 +14,17 @@ export class Camera {
   /** How quickly the camera catches up to its target, per second [0,1]. */
   followLerp = 0.12;
 
+  /**
+   * Screen-shake "trauma" in [0,1]. Effects add trauma on impactful events; it
+   * decays over time. The actual offset uses trauma² so small amounts stay
+   * subtle while big hits punch — a common, good-feeling shake curve.
+   */
+  trauma = 0;
+  /** Maximum shake displacement in world units at full trauma. */
+  maxShakeOffset = 10;
+  /** Trauma units shed per second. */
+  traumaDecay = 1.6;
+
   constructor(
     public viewportWidth: number,
     public viewportHeight: number,
@@ -22,6 +33,21 @@ export class Camera {
   resize(width: number, height: number): void {
     this.viewportWidth = width;
     this.viewportHeight = height;
+  }
+
+  /** Add screen-shake trauma (clamped to [0,1]). */
+  addTrauma(amount: number): void {
+    this.trauma = clamp(this.trauma + amount, 0, 1);
+  }
+
+  /** Decay trauma. Driven from the simulation each step. */
+  updateShake(dt: number): void {
+    if (this.trauma > 0) this.trauma = Math.max(0, this.trauma - this.traumaDecay * dt);
+  }
+
+  /** Current shake magnitude (world units) — random offset is applied by the renderer. */
+  get shakeMagnitude(): number {
+    return this.trauma * this.trauma * this.maxShakeOffset;
   }
 
   /** Smoothly move the camera centre toward `target`. */

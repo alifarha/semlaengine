@@ -39,10 +39,15 @@ export class Renderer {
     ctx.fillStyle = this.clearColor;
     ctx.fillRect(0, 0, this.width, this.height);
 
+    // Random screen-shake offset, scaled by current trauma.
+    const shake = camera.shakeMagnitude;
+    const ox = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
+    const oy = shake > 0 ? (Math.random() * 2 - 1) * shake : 0;
+
     // Apply camera: translate to centre, zoom, then offset by camera position.
     ctx.translate(this.width / 2, this.height / 2);
     ctx.scale(camera.zoom, camera.zoom);
-    ctx.translate(-camera.position.x, -camera.position.y);
+    ctx.translate(-camera.position.x + ox, -camera.position.y + oy);
   }
 
   end(): void {

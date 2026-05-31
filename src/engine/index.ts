@@ -31,6 +31,7 @@ export {
 } from "./ecs/components/CircleCollider";
 export { Health } from "./ecs/components/Health";
 export { Lifetime } from "./ecs/components/Lifetime";
+export { Transient } from "./ecs/components/Transient";
 
 // Built-in reusable systems
 export { MovementSystem } from "./ecs/systems/MovementSystem";
@@ -45,9 +46,10 @@ export * as MathUtils from "./math/MathUtils";
 export { Renderer } from "./rendering/Renderer";
 export { Camera } from "./rendering/Camera";
 
-// Input / assets / physics
+// Input / assets / audio / physics
 export { InputManager } from "./input/InputManager";
 export { AssetLoader } from "./assets/AssetLoader";
+export { AudioManager, type ToneOptions } from "./audio/AudioManager";
 export { SpatialHashGrid } from "./physics/SpatialHashGrid";
 
 // Serialization

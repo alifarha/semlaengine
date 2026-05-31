@@ -1,11 +1,13 @@
-import { EventEmitter } from "@engine";
+import { EventEmitter, type Entity } from "@engine";
 
 /**
- * Typed gameplay events. Systems emit these; the HUD, audio, and other systems
- * subscribe — keeping them decoupled. A single shared bus is passed to the
- * systems that need it (see `GameScene`).
+ * Typed gameplay events. Systems emit these; the HUD, audio, and effects
+ * systems subscribe — keeping them decoupled. A single shared bus is passed to
+ * the systems that need it (see `GameScene`).
  */
 export type GameEvents = {
+  weaponFired: { x: number; y: number; count: number };
+  enemyDamaged: { entity: Entity; x: number; y: number; amount: number; killed: boolean };
   enemyKilled: { x: number; y: number; xpValue: number };
   gemCollected: { value: number };
   playerLeveledUp: { level: number };

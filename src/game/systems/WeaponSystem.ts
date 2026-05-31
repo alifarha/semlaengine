@@ -3,6 +3,7 @@ import { Player } from "../components/Player";
 import { Weapon } from "../components/Weapon";
 import { Enemy } from "../components/Enemy";
 import { createProjectile } from "../entities/createProjectile";
+import type { GameEventBus } from "../events";
 
 /**
  * Auto-fires each weapon on its cooldown, aiming at the nearest enemy. When a
@@ -15,6 +16,10 @@ import { createProjectile } from "../entities/createProjectile";
  */
 export class WeaponSystem extends System {
   private readonly aim = new Vector2();
+
+  constructor(private readonly events: GameEventBus) {
+    super();
+  }
 
   update(world: World, time: Time): void {
     for (const entity of world.query(Player, Weapon, Transform)) {
@@ -49,6 +54,12 @@ export class WeaponSystem extends System {
           weapon.projectileLifetime,
         );
       }
+
+      this.events.emit("weaponFired", {
+        x: origin.x,
+        y: origin.y,
+        count: weapon.count,
+      });
     }
   }
 

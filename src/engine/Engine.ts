@@ -19,6 +19,9 @@ export interface EngineOptions {
  *   const engine = new Engine({ canvas });
  *   engine.start(new GameScene(engine.context));
  */
+/** A draw callback invoked after the scene, in screen space, each frame. */
+export type RenderOverlay = (renderer: Renderer, alpha: number) => void;
+
 export class Engine {
   readonly renderer: Renderer;
   readonly input: InputManager;
@@ -27,6 +30,7 @@ export class Engine {
   readonly context: EngineContext;
 
   private readonly loop: GameLoop;
+  private readonly overlays: RenderOverlay[] = [];
 
   constructor(options: EngineOptions) {
     this.renderer = new Renderer(options.canvas);
@@ -41,6 +45,7 @@ export class Engine {
       },
       render: (alpha) => {
         this.scenes.render(this.renderer, alpha);
+        for (const overlay of this.overlays) overlay(this.renderer, alpha);
       },
     });
 
@@ -61,6 +66,34 @@ export class Engine {
 
   stop(): void {
     this.loop.stop();
+  }
+
+  // --- Loop control (surfaced for tooling such as the editor) ---
+
+  pause(): void {
+    this.loop.pause();
+  }
+  resume(): void {
+    this.loop.resume();
+  }
+  togglePause(): void {
+    this.loop.togglePause();
+  }
+  get isPaused(): boolean {
+    return this.loop.isPaused;
+  }
+  /** Advance a single fixed simulation step while paused. */
+  step(): void {
+    this.loop.requestStep(1);
+  }
+
+  /** Register a screen-space draw callback run after the scene each frame. */
+  addRenderOverlay(overlay: RenderOverlay): () => void {
+    this.overlays.push(overlay);
+    return () => {
+      const i = this.overlays.indexOf(overlay);
+      if (i >= 0) this.overlays.splice(i, 1);
+    };
   }
 
   dispose(): void {

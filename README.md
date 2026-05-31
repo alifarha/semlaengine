@@ -56,14 +56,19 @@ src/
 │   ├── input/                # InputManager (keyboard + pointer)
 │   ├── assets/               # AssetLoader (images)
 │   └── physics/              # SpatialHashGrid (broadphase)
-└── game/                     # the vampire-survivor game
-    ├── components/           # Player, Enemy, Weapon, Projectile, gems, progress
-    ├── systems/              # control, AI, spawning, weapons, collision, XP…
-    ├── entities/             # factory functions (createPlayer, createEnemy…)
-    ├── data/                 # data-driven enemies, weapons, upgrades
-    ├── scenes/               # MenuScene, GameScene, GameOverScene
-    ├── ui/                   # Hud (screen-space overlay)
-    └── events.ts             # typed gameplay event bus
+├── game/                     # the vampire-survivor game
+│   ├── components/           # Player, Enemy, Weapon, Projectile, gems, progress
+│   ├── systems/              # control, AI, spawning, weapons, collision, XP…
+│   ├── entities/             # factory functions (createPlayer, createEnemy…)
+│   ├── data/                 # data-driven enemies, weapons, upgrades
+│   ├── scenes/               # MenuScene, GameScene, GameOverScene
+│   ├── ui/                   # Hud (screen-space overlay)
+│   └── events.ts             # typed gameplay event bus
+└── editor/                   # optional in-game editor overlay
+    ├── Editor.ts             # shell: toggle, selection, picking, highlight
+    ├── EditorPanel.ts        # panel base class
+    ├── fields.ts             # generic property editors (number/bool/color…)
+    └── panels/               # Toolbar, Hierarchy, Inspector, Data/Balance
 ```
 
 ### Why an ECS?
@@ -88,6 +93,59 @@ cells so collision checks only consider nearby candidates — turning the naive
 O(n²) all-pairs test into roughly O(n).
 [`CollisionSystem`](src/game/systems/CollisionSystem.ts) rebuilds the grid each
 frame and resolves projectile→enemy and enemy→player interactions against it.
+
+---
+
+## The in-game editor
+
+Press **`` ` ``** (backtick) at any time to toggle the editor overlay on top of
+the running game. It's a DOM overlay built around the live engine — not a
+separate mode — so you can tweak the game while it plays.
+
+What's in the shell:
+
+- **Toolbar** — play / pause, single-step (advance one fixed tick at a time), a
+  time-scale slider (slow-mo → 3× fast-forward), and live FPS + entity counts.
+- **Hierarchy** — every live entity, grouped by type with counts (the swarm is
+  capped to a readable list). Click to select.
+- **Inspector** — the selected entity's components with **editable fields**.
+  Edits write straight into the live component instances, so changing the
+  player's `moveSpeed` or its `Weapon.cooldown` is reflected on the very next
+  frame. Click an entity directly on the canvas to pick it; the selection is
+  ringed in the viewport.
+- **Data / Balance** — edit content definitions (e.g. enemy `health`, `speed`,
+  `contactDamage`) live; because the spawner reads definitions at spawn time,
+  changes apply to subsequent waves. Great for balancing without a rebuild.
+
+### How it plugs in
+
+The editor is **purely additive** — nothing in the engine or game depends on it.
+It's constructed in [`src/index.ts`](src/index.ts) and can be dropped from a
+shipping build by simply not creating it:
+
+```ts
+import { Editor } from "@editor";
+
+const editor = new Editor(engine, {
+  // expose game data to the Data/Balance panel (decoupled from the editor)
+  dataSources: [{ name: "Enemies", entries: () => /* {id, target}[] */ }],
+});
+```
+
+To make this work the engine grew a few small, reusable tooling hooks, all
+useful beyond the editor:
+
+- `Engine.pause() / resume() / step()` and a paused branch in
+  [`GameLoop`](src/engine/core/GameLoop.ts) that keeps rendering a frozen world.
+- `Engine.addRenderOverlay(fn)` — screen-space draw callbacks after the scene
+  (the editor uses one to ring the selected entity).
+- `World.liveEntities()` / `World.componentsOf(entity)` — read-only ECS
+  reflection for tooling.
+- `InputManager.enabled` — suspends game input while you type in an editor field
+  so WASD in a number box doesn't also move the player.
+
+Add your own panel by extending
+[`EditorPanel`](src/editor/EditorPanel.ts) and appending it in `Editor`.
 
 ### The simulation pipeline
 
@@ -133,6 +191,14 @@ The scaffold is intentionally a foundation. The most impactful next steps:
 - [ ] **Boss / elite enemies and wave scripting.**
 - [ ] **Persistence / meta-progression** between runs.
 - [ ] **Responsive canvas** — handle window resize and DPI scaling.
+
+Editor next steps:
+
+- [ ] **Scene save/load** — serialize the world to JSON and a place-entities tool.
+- [ ] **Add-component / add-entity** actions in the Inspector.
+- [ ] **Weapon data source** — make weapon stats data-driven so they're tunable
+      in the Data panel (today they're tuned via the player's live `Weapon`).
+- [ ] **Undo/redo** for edits.
 
 ---
 

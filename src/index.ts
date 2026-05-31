@@ -1,5 +1,7 @@
 import { Engine } from "@engine";
 import { MenuScene } from "@game/scenes/MenuScene";
+import { ENEMIES } from "@game";
+import { Editor, type DataSource } from "@editor";
 
 /**
  * Bootstraps the demo game. The `index.html` canvas drives a fixed-size view;
@@ -12,5 +14,17 @@ if (!canvas) throw new Error("Semla: #game canvas not found in the document.");
 const engine = new Engine({ canvas });
 engine.start(new MenuScene(engine.context));
 
+// Attach the in-game editor (press ` / backtick to toggle). Expose the game's
+// balance data so it can be tuned live. Omit this block in a shipping build.
+const enemyData: DataSource = {
+  name: "Enemies",
+  entries: () =>
+    Object.values(ENEMIES).map((def) => ({
+      id: def.id,
+      target: def as unknown as Record<string, unknown>,
+    })),
+};
+const editor = new Editor(engine, { dataSources: [enemyData] });
+
 // Expose for quick debugging in the browser console.
-(window as unknown as { engine: Engine }).engine = engine;
+Object.assign(window as unknown as Record<string, unknown>, { engine, editor });

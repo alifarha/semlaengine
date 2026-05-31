@@ -22,6 +22,11 @@ export class GameLoop {
   private running = false;
   private rafId = 0;
 
+  /** When paused, simulation steps are skipped but rendering continues. */
+  private paused = false;
+  /** Number of single-step requests queued while paused (editor "step" button). */
+  private pendingSteps = 0;
+
   /** Max simulation steps per frame before we drop time (anti spiral-of-death). */
   private readonly maxStepsPerFrame = 5;
 
@@ -43,6 +48,29 @@ export class GameLoop {
     return this.time;
   }
 
+  // --- Pause / step control (used by the editor) ---
+
+  pause(): void {
+    this.paused = true;
+  }
+
+  resume(): void {
+    this.paused = false;
+  }
+
+  togglePause(): void {
+    this.paused = !this.paused;
+  }
+
+  get isPaused(): boolean {
+    return this.paused;
+  }
+
+  /** Advance exactly `count` fixed steps on the next frame while paused. */
+  requestStep(count = 1): void {
+    this.pendingSteps += count;
+  }
+
   private tick = (timestamp: number): void => {
     if (!this.running) return;
 
@@ -51,6 +79,21 @@ export class GameLoop {
     let frameTime = (timestamp - this.lastTimestamp) / 1000;
     this.lastTimestamp = timestamp;
     if (frameTime > 0.25) frameTime = 0.25;
+
+    if (this.paused) {
+      // Run only explicitly requested single steps; keep rendering otherwise so
+      // the editor overlay stays live over a frozen world. Drop accumulated
+      // real time so resuming doesn't trigger a burst of catch-up updates.
+      while (this.pendingSteps > 0) {
+        this.callbacks.update(this.time);
+        this.time.advance();
+        this.pendingSteps--;
+      }
+      this.accumulator = 0;
+      this.callbacks.render(1);
+      this.rafId = requestAnimationFrame(this.tick);
+      return;
+    }
 
     this.accumulator += frameTime;
 

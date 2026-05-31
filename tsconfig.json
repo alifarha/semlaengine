@@ -20,7 +20,9 @@
       "@engine": ["src/engine/index.ts"],
       "@engine/*": ["src/engine/*"],
       "@game": ["src/game/index.ts"],
-      "@game/*": ["src/game/*"]
+      "@game/*": ["src/game/*"],
+      "@editor": ["src/editor/index.ts"],
+      "@editor/*": ["src/editor/*"]
     }
   },
   "include": ["src"]

@@ -6,7 +6,7 @@
  */
 
 // Core
-export { Engine, type EngineOptions } from "./Engine";
+export { Engine, type EngineOptions, type RenderOverlay } from "./Engine";
 export { GameLoop } from "./core/GameLoop";
 export { Time } from "./core/Time";
 export { Scene } from "./core/Scene";

@@ -115,6 +115,27 @@ export class World {
     return NULL_ENTITY;
   }
 
+  // --- Reflection (for tooling: editor, debug inspector) ---
+
+  /** Snapshot of all currently-live entities. */
+  liveEntities(): Entity[] {
+    const out: Entity[] = [];
+    for (const entity of this.living) {
+      if (!this.pendingDestroy.has(entity)) out.push(entity);
+    }
+    return out;
+  }
+
+  /** The component instances on an entity, paired with their class. */
+  componentsOf(entity: Entity): { type: ComponentClass; component: Component }[] {
+    const out: { type: ComponentClass; component: Component }[] = [];
+    for (const [ctor, store] of this.stores) {
+      const component = store.get(entity);
+      if (component) out.push({ type: ctor, component });
+    }
+    return out;
+  }
+
   /** Remove every entity and component. */
   clear(): void {
     this.stores.clear();

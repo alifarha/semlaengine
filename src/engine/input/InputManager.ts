@@ -15,8 +15,28 @@ export class InputManager {
   readonly pointer = new Vector2(0, 0);
   pointerDown = false;
 
+  /**
+   * When false, keyboard input is ignored and reported as released. Tooling
+   * (e.g. the editor) sets this while a text field is focused so typing "wasd"
+   * doesn't move the player. Disabling clears any currently-held keys.
+   */
+  private _enabled = true;
+
   constructor(private readonly target: HTMLElement = document.body) {
     this.attach();
+  }
+
+  get enabled(): boolean {
+    return this._enabled;
+  }
+
+  set enabled(value: boolean) {
+    this._enabled = value;
+    if (!value) {
+      this.down.clear();
+      this.pressedThisFrame.clear();
+      this.releasedThisFrame.clear();
+    }
   }
 
   private attach(): void {
@@ -71,11 +91,13 @@ export class InputManager {
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
+    if (!this._enabled) return;
     if (!this.down.has(e.code)) this.pressedThisFrame.add(e.code);
     this.down.add(e.code);
   };
 
   private onKeyUp = (e: KeyboardEvent): void => {
+    if (!this._enabled) return;
     this.down.delete(e.code);
     this.releasedThisFrame.add(e.code);
   };

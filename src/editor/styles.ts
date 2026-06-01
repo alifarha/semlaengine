@@ -15,6 +15,26 @@ export const EDITOR_CSS = `
 }
 .semla-editor.hidden { display: none; }
 
+/* Always-visible button to open the editor (keyboard-independent). */
+.semla-editor-fab {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1001;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: #cfd2e0;
+  background: #14141fdd;
+  border: 1px solid #b8922a;
+  border-radius: 6px;
+  padding: 7px 12px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.semla-editor-fab:hover { opacity: 1; }
+
 .semla-editor .semla-toolbar,
 .semla-editor .semla-dock {
   pointer-events: auto; /* but panels themselves capture input */

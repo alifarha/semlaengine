@@ -46,6 +46,7 @@ export class Editor implements EditorContext {
   readonly engine: Engine;
 
   private readonly root: HTMLElement;
+  private readonly toggleButton: HTMLButtonElement;
   private readonly toolbar: ToolbarPanel;
   private readonly hierarchy: HierarchyPanel;
   private readonly inspector: InspectorPanel;
@@ -88,6 +89,15 @@ export class Editor implements EditorContext {
 
     this.root.append(this.toolbar.element, leftDock, rightDock);
     document.body.appendChild(this.root);
+
+    // Always-visible toggle button — works on any keyboard/device, so the
+    // editor is reachable without relying on the backtick key.
+    this.toggleButton = document.createElement("button");
+    this.toggleButton.className = "semla-editor-fab";
+    this.toggleButton.textContent = "⚙ Editor";
+    this.toggleButton.title = "Open the editor (shortcut: ` )";
+    this.toggleButton.addEventListener("click", () => this.toggle());
+    document.body.appendChild(this.toggleButton);
 
     // Toolbar refreshes every frame (FPS counter); the rest are throttled.
     this.scheduled = [
@@ -133,6 +143,7 @@ export class Editor implements EditorContext {
     if (this.visible) return;
     this.visible = true;
     this.root.classList.remove("hidden");
+    this.toggleButton.style.display = "none";
     this.removeOverlay = this.engine.addRenderOverlay(() => this.drawSelection());
     this.refreshAll();
     this.loop();
@@ -142,6 +153,7 @@ export class Editor implements EditorContext {
     if (!this.visible) return;
     this.visible = false;
     this.root.classList.add("hidden");
+    this.toggleButton.style.display = "";
     this.engine.input.enabled = true;
     this.removeOverlay?.();
     this.removeOverlay = null;

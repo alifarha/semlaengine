@@ -32,6 +32,10 @@ jobs:
       - run: npm ci
       - run: npm run build
       - uses: actions/configure-pages@v5
+        with:
+          # Enable GitHub Pages automatically (needs a public repo or a paid
+          # plan), so no manual Settings → Pages toggle is required.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

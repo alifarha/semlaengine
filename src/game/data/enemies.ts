@@ -46,6 +46,26 @@ export const ENEMIES: Record<string, EnemyDef> = {
     color: "#d27d5a",
     unlockTime: 90,
   },
+  wraith: {
+    id: "wraith",
+    health: 40,
+    speed: 78,
+    contactDamage: 12,
+    radius: 8,
+    xpValue: 6,
+    color: "#7fd6e0",
+    unlockTime: 150,
+  },
+  troll: {
+    id: "troll",
+    health: 220,
+    speed: 26,
+    contactDamage: 28,
+    radius: 16,
+    xpValue: 12,
+    color: "#5a6e4a",
+    unlockTime: 240,
+  },
 };
 
 export const ENEMY_LIST: readonly EnemyDef[] = Object.values(ENEMIES);

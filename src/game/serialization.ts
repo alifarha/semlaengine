@@ -2,6 +2,7 @@ import { type ComponentRegistry } from "@engine";
 import { Player } from "./components/Player";
 import { Enemy } from "./components/Enemy";
 import { Weapon } from "./components/Weapon";
+import { WeaponInventory } from "./components/WeaponInventory";
 import { Projectile } from "./components/Projectile";
 import { ExperienceGem } from "./components/ExperienceGem";
 import { PlayerProgress } from "./components/PlayerProgress";
@@ -52,22 +53,37 @@ export function registerGameComponents(registry: ComponentRegistry): void {
       new Enemy(num(d, "speed", 45), num(d, "contactDamage", 8), num(d, "xpValue", 1)),
   });
 
+  const serializeWeapon = (w: Weapon): Record<string, unknown> => ({
+    id: w.id,
+    cooldown: w.cooldown,
+    timer: w.timer,
+    damage: w.damage,
+    projectileSpeed: w.projectileSpeed,
+    projectileLifetime: w.projectileLifetime,
+    pierce: w.pierce,
+    count: w.count,
+  });
+  const deserializeWeapon = (d: unknown): Weapon => {
+    const w = new Weapon(d as Partial<Weapon>);
+    w.timer = num(d, "timer");
+    return w;
+  };
+
   registry.register({
     name: "Weapon",
     type: Weapon,
-    serialize: (w) => ({
-      cooldown: w.cooldown,
-      timer: w.timer,
-      damage: w.damage,
-      projectileSpeed: w.projectileSpeed,
-      projectileLifetime: w.projectileLifetime,
-      pierce: w.pierce,
-      count: w.count,
-    }),
+    serialize: serializeWeapon,
+    deserialize: deserializeWeapon,
+  });
+
+  registry.register({
+    name: "WeaponInventory",
+    type: WeaponInventory,
+    serialize: (inv) => ({ weapons: inv.weapons.map(serializeWeapon) }),
     deserialize: (d) => {
-      const w = new Weapon(d as Partial<Weapon>);
-      w.timer = num(d, "timer");
-      return w;
+      const raw = (d as Record<string, unknown>).weapons;
+      const weapons = Array.isArray(raw) ? raw.map(deserializeWeapon) : [];
+      return new WeaponInventory(...weapons);
     },
   });
 

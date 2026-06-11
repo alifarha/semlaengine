@@ -12,7 +12,7 @@ export { Time } from "./core/Time";
 export { Scene } from "./core/Scene";
 export { SceneManager } from "./core/SceneManager";
 export { EventEmitter } from "./core/EventEmitter";
-export type { EngineContext } from "./core/EngineContext";
+export type { EngineContext, LoopControl } from "./core/EngineContext";
 
 // ECS
 export { World } from "./ecs/World";
@@ -32,10 +32,12 @@ export {
 export { Health } from "./ecs/components/Health";
 export { Lifetime } from "./ecs/components/Lifetime";
 export { Transient } from "./ecs/components/Transient";
+export { Animator } from "./ecs/components/Animator";
 
 // Built-in reusable systems
 export { MovementSystem } from "./ecs/systems/MovementSystem";
 export { LifetimeSystem } from "./ecs/systems/LifetimeSystem";
+export { AnimationSystem } from "./ecs/systems/AnimationSystem";
 
 // Math
 export { Vector2 } from "./math/Vector2";

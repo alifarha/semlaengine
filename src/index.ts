@@ -4,9 +4,9 @@ import { ENEMIES, WEAPONS, registerGameComponents } from "@game";
 import { Editor, type DataSource } from "@editor";
 
 /**
- * Bootstraps the demo game. The `index.html` canvas drives a fixed-size view;
- * resize handling could be added by listening for window resize and calling
- * `engine.renderer` / camera resize.
+ * Bootstraps the demo game. The engine keeps the canvas sized to the window
+ * (with device-pixel-ratio scaling) — pass `autoResize: false` to manage the
+ * canvas size yourself.
  */
 const canvas = document.getElementById("game") as HTMLCanvasElement | null;
 if (!canvas) throw new Error("Semla: #game canvas not found in the document.");

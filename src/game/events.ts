@@ -14,6 +14,7 @@ export type GameEvents = {
   playerDamaged: { amount: number; remaining: number };
   playerDied: void;
   draugrFormChanged: { state: string; ascending: boolean };
+  waveSpawned: { label: string };
   bossSpawned: { name: string };
   bossDefeated: { name: string };
 };

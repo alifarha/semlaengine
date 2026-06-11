@@ -15,17 +15,12 @@
         overflow: hidden;
       }
       #app {
-        display: flex;
-        align-items: center;
-        justify-content: center;
         height: 100%;
       }
+      /* The engine sizes the canvas to the window (with DPI scaling). */
       canvas {
+        display: block;
         background: #15151f;
-        image-rendering: pixelated;
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-        max-width: 100vw;
-        max-height: 100vh;
       }
     </style>
   </head>

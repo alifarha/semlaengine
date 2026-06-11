@@ -16,26 +16,59 @@ export class Renderer {
   /** Background fill color used each frame. */
   clearColor = "#15151f";
 
+  /** Device pixel ratio the backing store is scaled by. */
+  private dpr = 1;
+  /** Logical (CSS pixel) size — all drawing and UI math uses these units. */
+  private logicalWidth: number;
+  private logicalHeight: number;
+
   private readonly scratch = new Vector2();
 
   constructor(public readonly canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) throw new Error("Semla: 2D canvas context unavailable.");
     this.ctx = ctx;
-    this.camera = new Camera(canvas.width, canvas.height);
+    this.logicalWidth = canvas.width;
+    this.logicalHeight = canvas.height;
+    this.camera = new Camera(this.logicalWidth, this.logicalHeight);
   }
 
   get width(): number {
-    return this.canvas.width;
+    return this.logicalWidth;
   }
   get height(): number {
-    return this.canvas.height;
+    return this.logicalHeight;
+  }
+
+  /**
+   * Resize the drawing surface to a CSS-pixel size, scaling the backing store
+   * by the device pixel ratio so rendering stays crisp on HiDPI displays.
+   * All drawing continues to use CSS-pixel units.
+   */
+  resize(cssWidth: number, cssHeight: number): void {
+    this.dpr = Math.min(window.devicePixelRatio || 1, 3);
+    this.logicalWidth = Math.max(1, Math.round(cssWidth));
+    this.logicalHeight = Math.max(1, Math.round(cssHeight));
+    this.canvas.width = Math.round(this.logicalWidth * this.dpr);
+    this.canvas.height = Math.round(this.logicalHeight * this.dpr);
+    this.canvas.style.width = `${this.logicalWidth}px`;
+    this.canvas.style.height = `${this.logicalHeight}px`;
+    this.camera.resize(this.logicalWidth, this.logicalHeight);
+  }
+
+  /**
+   * Reset to the screen-space (UI) transform. Use this instead of a raw
+   * `ctx.setTransform(1, 0, 0, 1, 0, 0)` — identity would bypass the device
+   * pixel ratio scaling and draw UI at the wrong size on HiDPI displays.
+   */
+  resetTransform(): void {
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
   /** Clear and apply the camera transform. World draws go between begin/end. */
   begin(): void {
     const { ctx, camera } = this;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.resetTransform();
     ctx.fillStyle = this.clearColor;
     ctx.fillRect(0, 0, this.width, this.height);
 
@@ -51,7 +84,7 @@ export class Renderer {
   }
 
   end(): void {
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.resetTransform();
   }
 
   drawCircle(x: number, y: number, radius: number, color: string, alpha = 1): void {

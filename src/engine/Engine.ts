@@ -9,6 +9,12 @@ import type { Scene } from "./core/Scene";
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement;
+  /**
+   * Keep the canvas sized to the window (with device-pixel-ratio scaling).
+   * Defaults to true; set false to manage the canvas size yourself via
+   * `renderer.resize()`.
+   */
+  autoResize?: boolean;
 }
 
 /**
@@ -33,9 +39,16 @@ export class Engine {
 
   private readonly loop: GameLoop;
   private readonly overlays: RenderOverlay[] = [];
+  private readonly onWindowResize: (() => void) | null = null;
 
   constructor(options: EngineOptions) {
     this.renderer = new Renderer(options.canvas);
+    if (options.autoResize !== false) {
+      this.onWindowResize = () =>
+        this.renderer.resize(window.innerWidth, window.innerHeight);
+      this.onWindowResize();
+      window.addEventListener("resize", this.onWindowResize);
+    }
     this.input = new InputManager(options.canvas);
     this.assets = new AssetLoader();
     this.audio = new AudioManager();
@@ -57,6 +70,7 @@ export class Engine {
       },
     });
 
+    const loop = this.loop;
     this.context = {
       renderer: this.renderer,
       input: this.input,
@@ -64,6 +78,14 @@ export class Engine {
       audio: this.audio,
       time: this.loop.getTime(),
       scenes: this.scenes,
+      loop: {
+        pause: () => loop.pause(),
+        resume: () => loop.resume(),
+        togglePause: () => loop.togglePause(),
+        get isPaused() {
+          return loop.isPaused;
+        },
+      },
     };
   }
 
@@ -108,5 +130,6 @@ export class Engine {
   dispose(): void {
     this.stop();
     this.input.dispose();
+    if (this.onWindowResize) window.removeEventListener("resize", this.onWindowResize);
   }
 }

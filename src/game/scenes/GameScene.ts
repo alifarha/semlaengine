@@ -7,6 +7,7 @@ import {
   Vector2,
   MovementSystem,
   LifetimeSystem,
+  AnimationSystem,
 } from "@engine";
 import { createPlayer } from "../entities/createPlayer";
 import { Player } from "../components/Player";
@@ -15,6 +16,7 @@ import { PlayerControlSystem } from "../systems/PlayerControlSystem";
 import { DraugrFormSystem } from "../systems/DraugrFormSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { EnemySpawnSystem } from "../systems/EnemySpawnSystem";
+import { WaveSystem } from "../systems/WaveSystem";
 import { BossSystem } from "../systems/BossSystem";
 import { CollisionSystem } from "../systems/CollisionSystem";
 import { WeaponSystem } from "../systems/WeaponSystem";
@@ -27,6 +29,7 @@ import { Hud } from "../ui/Hud";
 import { KenningScreen } from "../ui/KenningScreen";
 import { rollKennings, type Rune } from "../data/runes";
 import { createGameEventBus, type GameEventBus } from "../events";
+import { addShards, shardsForRun } from "../meta";
 import { GameOverScene, type RunSummary } from "./GameOverScene";
 
 /**
@@ -77,13 +80,15 @@ export class GameScene extends Scene {
     // BossSystem runs after the generic enemy AI so it can override Hati's
     // velocity with flanking movement.
     this.addSystem(new BossSystem(this.events));
-    this.addSystem(new EnemySpawnSystem());
+    this.addSystem(new EnemySpawnSystem(this.ctx.renderer.camera));
+    this.addSystem(new WaveSystem(this.events, this.ctx.renderer.camera));
     this.addSystem(new WeaponSystem(this.events));
     this.addSystem(new MovementSystem());
     this.addSystem(new CollisionSystem(this.events));
     this.addSystem(new ExperienceSystem(this.events));
     this.addSystem(new DeathSystem(this.events));
     this.addSystem(new LifetimeSystem());
+    this.addSystem(new AnimationSystem());
     // Effects last: it reacts to events emitted earlier this step and advances
     // the transient particle/text/flash entities those events spawn.
     this.addSystem(new EffectsSystem(this.events, this.ctx));
@@ -98,11 +103,11 @@ export class GameScene extends Scene {
       // Snapshot the results now: DeathSystem destroys the player entity, so
       // by render time its PlayerProgress is no longer queryable.
       const progress = this.world.get(player, PlayerProgress);
-      this.summary = {
-        level: progress?.level ?? 1,
-        kills: progress?.kills ?? 0,
-        time: this.runClock.elapsed,
-      };
+      const level = progress?.level ?? 1;
+      const kills = progress?.kills ?? 0;
+      const shards = shardsForRun(level, kills);
+      addShards(shards); // bank meta-progression currency immediately
+      this.summary = { level, kills, shards, time: this.runClock.elapsed };
     });
     // Each level-up queues a Kenning choice; the choice is resolved in update().
     this.events.on("playerLeveledUp", () => {
@@ -111,11 +116,20 @@ export class GameScene extends Scene {
   }
 
   override update(time: Time): void {
+    // Player-facing pause. Unpausing is handled in render(): while the loop is
+    // paused no updates run, but rendering (and its input-edge window) does.
+    if (!this.playerDead && this.ctx.input.wasPressed("KeyP")) {
+      this.ctx.loop.pause();
+      return;
+    }
+
     // While a Kenning choice is pending, freeze the simulation and resolve the
     // player's pick. Multiple queued level-ups present one choice at a time.
     if (!this.playerDead && this.pendingLevels > 0) {
       if (!this.currentOffer) {
-        this.currentOffer = rollKennings(3);
+        const player = this.world.first(Player);
+        this.currentOffer =
+          player >= 0 ? rollKennings(3, this.world, player) : rollKennings(3);
         this.kenningScreen.begin();
       }
       const picked = this.kenningScreen.poll(
@@ -163,6 +177,27 @@ export class GameScene extends Scene {
     // The Kenning choice draws on top of the frozen world + HUD.
     if (this.currentOffer) {
       this.kenningScreen.render(this.currentOffer, this.ctx.input, renderer);
+    }
+
+    // Paused overlay + unpause. Input edges are still delivered during render
+    // while the loop is paused (the engine flushes them after overlays).
+    if (this.ctx.loop.isPaused) {
+      if (this.ctx.input.wasPressed("KeyP")) {
+        this.ctx.loop.resume();
+      } else {
+        renderer.resetTransform();
+        const ctx = renderer.ctx;
+        ctx.fillStyle = "rgba(8, 6, 4, 0.55)";
+        ctx.fillRect(0, 0, renderer.width, renderer.height);
+        ctx.fillStyle = "#f0e8d8";
+        ctx.font = "bold 34px Georgia, serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("PAUSED", renderer.width / 2, renderer.height / 2 - 8);
+        ctx.fillStyle = "#9b8f76";
+        ctx.font = "15px system-ui, sans-serif";
+        ctx.fillText("Press P to resume", renderer.width / 2, renderer.height / 2 + 22);
+      }
     }
 
     if (this.playerDead && this.summary) {

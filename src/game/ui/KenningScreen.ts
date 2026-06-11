@@ -69,7 +69,7 @@ export class KenningScreen {
     const ctx = renderer.ctx;
     const { width, height } = renderer;
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    renderer.resetTransform();
     ctx.fillStyle = COL.dim;
     ctx.fillRect(0, 0, width, height);
 
@@ -171,12 +171,9 @@ export class KenningScreen {
     return rects;
   }
 
-  /** Pointer position mapped from CSS pixels into canvas pixels. */
-  private pointerInCanvas(input: InputManager, renderer: Renderer): [number, number] {
-    const rect = renderer.canvas.getBoundingClientRect();
-    const scaleX = rect.width > 0 ? renderer.width / rect.width : 1;
-    const scaleY = rect.height > 0 ? renderer.height / rect.height : 1;
-    return [input.pointer.x * scaleX, input.pointer.y * scaleY];
+  /** Pointer position in UI units (CSS pixels — same space the cards use). */
+  private pointerInCanvas(input: InputManager, _renderer: Renderer): [number, number] {
+    return [input.pointer.x, input.pointer.y];
   }
 }
 

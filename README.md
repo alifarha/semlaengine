@@ -21,19 +21,26 @@ npm install
 npm run dev      # start the Vite dev server and open the demo
 npm run build    # typecheck + production build into dist/
 npm run typecheck
-npm test         # headless logic tests (serialization, runes)
+npm test         # headless logic tests (serialization, runes, boss, collision, waves, meta)
 ```
 
-**Controls:** WASD / arrow keys to move. Weapons fire automatically at the
-nearest enemy. Collect sál orbs to level up — each level pauses the game and
-offers a choice of three **rune-kennings** (pick with the `1`/`2`/`3` keys or a
-click). Survive.
+**Controls:** WASD / arrow keys to move; `P` pauses. Weapons fire automatically
+at the nearest enemy. Collect sál orbs to level up — each level pauses the game
+and offers a choice of three **rune-kennings** (pick with the `1`/`2`/`3` keys
+or a click), including runes that grant **new weapons** (up to four firing at
+once). Survive.
+
+Dying banks **sál shards**: press `U` on the title screen to enter **the
+Barrow** and buy permanent upgrades (vigour, might, swiftness, pickup range)
+that apply to every future run.
 
 Your draugr's **form** rises as you drink sál (Risen → Gorged → Barrow-King for
 escalating power) and decays if you stop killing (down to Starving, −30% damage)
 — watch the form badge above the vigour bar. Around the one-minute mark, the
 wolves **Sköll & Hati** appear: Sköll pursues while Hati flanks, and Hati enrages
-when Sköll falls.
+when Sköll falls. **Scripted waves** punctuate the run (rings and ambush
+clusters, announced on screen), gold-clad **elites** start appearing after the
+first minute, and five enemy archetypes unlock as time passes.
 
 > The demo is evolving into **DRAUGR**, a Norse vampire-survivor (see the game
 > design document). Built so far on the engine: the Kenning rune choice
@@ -232,11 +239,15 @@ The scaffold is intentionally a foundation. The most impactful next steps:
 - [x] **Level-up choice UI** — leveling pauses the sim and offers a pick-3 of
       rune-kennings ([`KenningScreen`](src/game/ui/KenningScreen.ts) +
       [`data/runes.ts`](src/game/data/runes.ts)).
-- [ ] **Multiple simultaneous weapons** per player (weapon inventory).
+- [x] **Multiple simultaneous weapons** —
+      [`WeaponInventory`](src/game/components/WeaponInventory.ts) holds up to
+      four; the Hagalaz/Gebo runes grant new weapons mid-run.
 - [ ] **Object pooling** for projectiles/enemies/gems to cut GC pressure at high
       entity counts.
-- [ ] **Sprite/animation support** — `Sprite` already supports images and sprite
-      sheets; add an `Animator` component + system and wire up `AssetLoader`.
+- [x] **Sprite/animation support** —
+      [`Animator`](src/engine/ecs/components/Animator.ts) + `AnimationSystem`
+      flip through sprite-sheet frames (sál orbs use a procedurally drawn sheet,
+      so the demo exercises the image path with zero asset files).
 - [x] **Audio** — `AudioManager` synthesizes SFX off the gameplay event bus.
 - [x] **Game feel / juice** — screen shake, hit flashes, damage numbers, kill
       particles (see `EffectsSystem`).
@@ -244,9 +255,16 @@ The scaffold is intentionally a foundation. The most impactful next steps:
       stat + body changes ([`DraugrFormSystem`](src/game/systems/DraugrFormSystem.ts)).
 - [x] **First boss** — Sköll & Hati: timed spawn, Hati's flanking AI, rage when
       Sköll falls ([`BossSystem`](src/game/systems/BossSystem.ts)).
-- [ ] **More bosses, elites, and wave scripting** (realm lords, Ragnarök).
-- [ ] **Persistence / meta-progression** between runs.
-- [ ] **Responsive canvas** — handle window resize and DPI scaling.
+- [x] **Elites and wave scripting** — gold-clad elite spawns ramp over time, and
+      [`data/waves.ts`](src/game/data/waves.ts) scripts ring/cluster formations
+      ([`WaveSystem`](src/game/systems/WaveSystem.ts)).
+- [ ] **More bosses** (realm lords, Ragnarök).
+- [x] **Persistence / meta-progression** — sál shards bank on death; the Barrow
+      ([`UpgradeScene`](src/game/scenes/UpgradeScene.ts), `U` on the menu) sells
+      permanent upgrades stored in `localStorage` ([`meta.ts`](src/game/meta.ts)).
+- [x] **Responsive canvas** — the engine sizes the canvas to the window with
+      device-pixel-ratio scaling (`autoResize` engine option,
+      `Renderer.resize`).
 
 Editor:
 

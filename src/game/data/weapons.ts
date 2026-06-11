@@ -50,11 +50,24 @@ export const WEAPONS: Record<string, WeaponDef> = {
       count: 3,
     },
   },
+  lance: {
+    id: "lance",
+    name: "Gungnir's Splinter",
+    description: "A slow, heavy spear-cast that skewers through the swarm.",
+    stats: {
+      cooldown: 1.8,
+      damage: 26,
+      projectileSpeed: 360,
+      projectileLifetime: 1.6,
+      pierce: 4,
+      count: 1,
+    },
+  },
 };
 
 /** Build a fresh Weapon component from a definition's stats. */
 export function weaponFromDef(def: WeaponDef): Weapon {
-  return new Weapon({ ...def.stats });
+  return new Weapon({ ...def.stats, id: def.id });
 }
 
 export const STARTING_WEAPON = WEAPONS.bolt;

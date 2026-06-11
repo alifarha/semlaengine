@@ -107,6 +107,11 @@ export class EffectsSystem extends System {
       audio.tone({ freq: 320, slideTo: 50, duration: 0.7, type: "sawtooth", gain: 0.3 });
     });
 
+    this.events.on("waveSpawned", () => {
+      camera.addTrauma(0.25);
+      audio.tone({ freq: 130, slideTo: 95, duration: 0.35, type: "sawtooth", gain: 0.18 });
+    });
+
     this.events.on("bossSpawned", ({ name }) => {
       const player = world.first(Player, Transform);
       if (player >= 0) {

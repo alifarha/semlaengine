@@ -3,6 +3,8 @@ import { Player } from "../components/Player";
 import { PlayerProgress } from "../components/PlayerProgress";
 import { DraugrForm, FormState } from "../components/DraugrForm";
 import { Boss } from "../components/Boss";
+import { WeaponInventory } from "../components/WeaponInventory";
+import { WEAPONS } from "../data/weapons";
 
 /** Colour the form badge + sál bar take per draugr form. */
 const FORM_COLOR: Record<string, string> = {
@@ -73,6 +75,22 @@ export class Hud {
     }
 
     if (playerEntity < 0) return;
+
+    // --- Armament list (bottom-right) ---
+    const inventory = world.get(playerEntity, WeaponInventory);
+    if (inventory) {
+      ctx.font = "12px Georgia, serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "alphabetic";
+      let wy = renderer.height - 14;
+      for (let i = inventory.weapons.length - 1; i >= 0; i--) {
+        const weapon = inventory.weapons[i];
+        ctx.fillStyle = "#9b8f76";
+        ctx.fillText(WEAPONS[weapon.id]?.name ?? weapon.id, renderer.width - 12, wy);
+        wy -= 16;
+      }
+      ctx.textBaseline = "top";
+    }
 
     // --- Bottom-left status stack: vigour, fullness, form badge ---
     const x = 12;

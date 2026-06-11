@@ -8,12 +8,14 @@
 export { MenuScene } from "./scenes/MenuScene";
 export { GameScene } from "./scenes/GameScene";
 export { GameOverScene, type RunSummary } from "./scenes/GameOverScene";
+export { UpgradeScene } from "./scenes/UpgradeScene";
 
 // Components
 export { Player } from "./components/Player";
 export { Enemy } from "./components/Enemy";
 export { Boss, type BossRole } from "./components/Boss";
 export { Weapon } from "./components/Weapon";
+export { WeaponInventory } from "./components/WeaponInventory";
 export { Projectile } from "./components/Projectile";
 export { ExperienceGem } from "./components/ExperienceGem";
 export { PlayerProgress } from "./components/PlayerProgress";
@@ -34,6 +36,24 @@ export {
   type WeaponStats,
 } from "./data/weapons";
 export { RUNES, rollKennings, type Rune } from "./data/runes";
+export { WAVES, type WaveEvent } from "./data/waves";
+
+// Meta-progression
+export {
+  META_UPGRADES,
+  loadMeta,
+  saveMeta,
+  setMetaStorage,
+  addShards,
+  buyUpgrade,
+  upgradeCost,
+  shardsForRun,
+  metaBonuses,
+  type MetaState,
+  type MetaStorage,
+  type MetaUpgradeDef,
+  type MetaBonuses,
+} from "./meta";
 
 // Events
 export { createGameEventBus, type GameEvents, type GameEventBus } from "./events";

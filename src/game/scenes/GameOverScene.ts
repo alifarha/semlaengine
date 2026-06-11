@@ -5,6 +5,8 @@ export interface RunSummary {
   level: number;
   kills: number;
   time: number;
+  /** Sál shards banked for meta-progression (see meta.ts). */
+  shards: number;
 }
 
 /** Shows the results of a run and waits for a key to restart. */
@@ -31,7 +33,7 @@ export class GameOverScene extends Scene {
 
   render(renderer: Renderer, _alpha: number): void {
     const ctx = renderer.ctx;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    renderer.resetTransform();
     ctx.fillStyle = "#0b0b12";
     ctx.fillRect(0, 0, renderer.width, renderer.height);
 
@@ -53,8 +55,12 @@ export class GameOverScene extends Scene {
     ctx.fillText(`Level ${this.summary.level}`, cx, renderer.height / 2 + 12);
     ctx.fillText(`${this.summary.kills} kills`, cx, renderer.height / 2 + 40);
 
+    ctx.fillStyle = "#46e0a0";
+    ctx.font = "18px Georgia, serif";
+    ctx.fillText(`✦ +${this.summary.shards} sál shards for the Barrow`, cx, renderer.height / 2 + 72);
+
     ctx.fillStyle = "#9b9bb5";
     ctx.font = "16px system-ui, sans-serif";
-    ctx.fillText("Press Space or click to play again", cx, renderer.height / 2 + 90);
+    ctx.fillText("Press Space or click to play again", cx, renderer.height / 2 + 104);
   }
 }

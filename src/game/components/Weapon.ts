@@ -10,6 +10,9 @@ import type { Component } from "@engine";
  * for clarity. Upgrades adjust cooldown, damage, projectile count, etc.
  */
 export class Weapon implements Component {
+  /** Blueprint id this weapon was built from (see data/weapons.ts). */
+  id: string;
+
   /** Seconds between shots. */
   cooldown: number;
   /** Counts down to the next shot. */
@@ -28,6 +31,7 @@ export class Weapon implements Component {
 
   // Defaults mirror the "bolt" blueprint in data/weapons.ts.
   constructor(opts: Partial<Weapon> = {}) {
+    this.id = opts.id ?? "bolt";
     this.cooldown = opts.cooldown ?? 0.7;
     this.damage = opts.damage ?? 10;
     this.projectileSpeed = opts.projectileSpeed ?? 280;

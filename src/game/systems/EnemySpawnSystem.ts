@@ -2,6 +2,7 @@ import {
   System,
   type World,
   type Time,
+  type Camera,
   Transform,
   Vector2,
   MathUtils,
@@ -19,17 +20,29 @@ import { ENEMY_LIST } from "../data/enemies";
 export class EnemySpawnSystem extends System {
   private timer = 0;
 
-  /**
-   * Distance from the player at which enemies appear. Must exceed the
-   * viewport's half-diagonal (~550 for 960×540 at zoom 1) or spawns on
-   * near-horizontal angles pop into view instead of arriving off-screen.
-   */
-  private spawnRadius = 620;
-
   /** Hard cap so the simulation stays performant. */
   private maxEnemies = 600;
 
   private readonly scratch = new Vector2();
+
+  constructor(
+    /** Used to size the spawn ring to whatever is currently visible. */
+    private readonly camera?: Camera,
+  ) {
+    super();
+  }
+
+  /**
+   * Distance from the player at which enemies appear: just past the viewport's
+   * half-diagonal, so spawns never pop into view regardless of window size.
+   */
+  private spawnRadius(): number {
+    if (!this.camera) return 620; // headless fallback (tests)
+    const halfDiag =
+      Math.hypot(this.camera.viewportWidth, this.camera.viewportHeight) /
+      (2 * this.camera.zoom);
+    return halfDiag + 80;
+  }
 
   update(world: World, time: Time): void {
     const playerEntity = world.first(Player, Transform);
@@ -53,17 +66,22 @@ export class EnemySpawnSystem extends System {
     const available = ENEMY_LIST.filter((e) => e.unlockTime <= time.elapsed);
     if (available.length === 0) return;
 
+    // Elite chance ramps from 0 to 8% over the first four minutes.
+    const eliteChance = Math.min(0.08, minutes * 0.02);
+
+    const spawnRadius = this.spawnRadius();
     for (let i = 0; i < batch; i++) {
       const angle = MathUtils.randRange(0, MathUtils.TAU);
       this.scratch
         .set(Math.cos(angle), Math.sin(angle))
-        .scale(this.spawnRadius);
+        .scale(spawnRadius);
       const def = MathUtils.randChoice(available);
       createEnemy(
         world,
         def,
         playerPos.x + this.scratch.x,
         playerPos.y + this.scratch.y,
+        { elite: Math.random() < eliteChance },
       );
     }
   }

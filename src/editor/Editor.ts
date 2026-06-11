@@ -231,11 +231,12 @@ export class Editor implements EditorContext {
     const world = this.world;
     if (!world) return;
 
-    const canvas = this.engine.renderer.canvas;
-    const rect = canvas.getBoundingClientRect();
-    const sx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const sy = (e.clientY - rect.top) * (canvas.height / rect.height);
-    const point = this.engine.renderer.camera.screenToWorld(sx, sy);
+    // Pointer CSS pixels are the renderer's logical units — no rescaling.
+    const rect = this.engine.renderer.canvas.getBoundingClientRect();
+    const point = this.engine.renderer.camera.screenToWorld(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+    );
 
     let best: Entity | null = null;
     let bestDist = Infinity;
@@ -310,7 +311,7 @@ export class Editor implements EditorContext {
       6;
 
     const ctx = renderer.ctx;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    renderer.resetTransform();
     ctx.strokeStyle = "#ffd166";
     ctx.lineWidth = 2;
     ctx.beginPath();

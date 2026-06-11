@@ -5,6 +5,7 @@ import { Sprite } from "../ecs/components/Sprite";
 import { CircleCollider } from "../ecs/components/CircleCollider";
 import { Health } from "../ecs/components/Health";
 import { Lifetime } from "../ecs/components/Lifetime";
+import { Animator } from "../ecs/components/Animator";
 
 /** Convenience: read a property off serialized data as a number. */
 function num(data: unknown, key: string, fallback = 0): number {
@@ -89,5 +90,31 @@ export function registerBuiltinComponents(registry: ComponentRegistry): void {
     type: Lifetime,
     serialize: (l) => ({ remaining: l.remaining }),
     deserialize: (d) => new Lifetime(num(d, "remaining")),
+  });
+
+  registry.register({
+    name: "Animator",
+    type: Animator,
+    serialize: (a) => ({
+      frameWidth: a.frameWidth,
+      frameHeight: a.frameHeight,
+      frameCount: a.frameCount,
+      fps: a.fps,
+      row: a.row,
+      loop: a.loop,
+      time: a.time,
+    }),
+    deserialize: (d) => {
+      const anim = new Animator({
+        frameWidth: num(d, "frameWidth", 16),
+        frameHeight: num(d, "frameHeight", 16),
+        frameCount: num(d, "frameCount", 1),
+        fps: num(d, "fps", 10),
+        row: num(d, "row"),
+        loop: (d as Record<string, unknown>).loop !== false,
+      });
+      anim.time = num(d, "time");
+      return anim;
+    },
   });
 }

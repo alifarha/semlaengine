@@ -1,6 +1,8 @@
 import type { World, Entity } from "@engine";
 import { Player } from "../components/Player";
-import { Weapon } from "../components/Weapon";
+import type { Weapon } from "../components/Weapon";
+import { WeaponInventory } from "../components/WeaponInventory";
+import { WEAPONS, weaponFromDef } from "./weapons";
 import { Health } from "@engine";
 
 /**
@@ -23,6 +25,38 @@ export interface Rune {
   /** Short Eddic-style flavour line. */
   readonly flavor: string;
   readonly apply: (world: World, player: Entity) => void;
+  /**
+   * Whether this rune may be offered right now (e.g. weapon-granting runes
+   * disappear once the weapon is owned or the inventory is full). Omitted
+   * means always available.
+   */
+  readonly available?: (world: World, player: Entity) => boolean;
+}
+
+/** Apply a mutation to every weapon the player holds. */
+function eachWeapon(world: World, player: Entity, fn: (w: Weapon) => void): void {
+  const inventory = world.get(player, WeaponInventory);
+  if (inventory) for (const weapon of inventory.weapons) fn(weapon);
+}
+
+/** A rune that adds the given weapon blueprint to the player's armament. */
+function grantWeaponRune(
+  weaponId: string,
+  rune: Omit<Rune, "apply" | "available">,
+): Rune {
+  return {
+    ...rune,
+    apply: (world, player) => {
+      const inventory = world.get(player, WeaponInventory);
+      if (inventory && !inventory.has(weaponId)) {
+        inventory.add(weaponFromDef(WEAPONS[weaponId]));
+      }
+    },
+    available: (world, player) => {
+      const inventory = world.get(player, WeaponInventory);
+      return !!inventory && !inventory.isFull && !inventory.has(weaponId);
+    },
+  };
 }
 
 export const RUNES: readonly Rune[] = [
@@ -63,23 +97,18 @@ export const RUNES: readonly Rune[] = [
     id: "sowilo",
     glyph: "ᛋ",
     name: "Sowilo",
-    description: "-13% weapon cooldown.",
+    description: "-13% cooldown on all weapons.",
     flavor: "The sun wheels faster across the dead sky.",
-    apply: (world, player) => {
-      const w = world.get(player, Weapon);
-      if (w) w.cooldown *= 0.87;
-    },
+    apply: (world, player) =>
+      eachWeapon(world, player, (w) => (w.cooldown *= 0.87)),
   },
   {
     id: "tiwaz",
     glyph: "ᛏ",
     name: "Tiwaz",
-    description: "+1 projectile per cast.",
+    description: "+1 projectile per cast, on all weapons.",
     flavor: "Tyr's hand guides each throw.",
-    apply: (world, player) => {
-      const w = world.get(player, Weapon);
-      if (w) w.count += 1;
-    },
+    apply: (world, player) => eachWeapon(world, player, (w) => (w.count += 1)),
   },
   {
     id: "thurisaz",
@@ -87,25 +116,34 @@ export const RUNES: readonly Rune[] = [
     name: "Thurisaz",
     description: "+1 pierce — strikes pass through more foes.",
     flavor: "The giant's thorn passes through many.",
-    apply: (world, player) => {
-      const w = world.get(player, Weapon);
-      if (w) w.pierce += 1;
-    },
+    apply: (world, player) => eachWeapon(world, player, (w) => (w.pierce += 1)),
   },
   {
     id: "ansuz",
     glyph: "ᚨ",
     name: "Ansuz",
-    description: "+20% projectile speed and +5% damage.",
+    description: "+20% projectile speed and +5% damage on all weapons.",
     flavor: "Odin's breath speeds the cast.",
-    apply: (world, player) => {
-      const w = world.get(player, Weapon);
-      if (w) {
+    apply: (world, player) =>
+      eachWeapon(world, player, (w) => {
         w.projectileSpeed *= 1.2;
         w.damage *= 1.05;
-      }
-    },
+      }),
   },
+  grantWeaponRune("spread", {
+    id: "hagalaz",
+    glyph: "ᚺ",
+    name: "Hagalaz",
+    description: "New weapon: Scatter Shot — a fan of bolts like driving hail.",
+    flavor: "Hail falls on the living and the dead alike.",
+  }),
+  grantWeaponRune("lance", {
+    id: "gebo",
+    glyph: "ᚷ",
+    name: "Gebo",
+    description: "New weapon: Gungnir's Splinter — a heavy spear that skewers four foes.",
+    flavor: "A gift from the spear-god demands a gift in return.",
+  }),
   {
     id: "algiz",
     glyph: "ᛉ",
@@ -122,9 +160,16 @@ export const RUNES: readonly Rune[] = [
   },
 ];
 
-/** Pick `count` distinct runes at random for a Kenning offer. */
-export function rollKennings(count = 3): Rune[] {
-  const pool = [...RUNES];
+/**
+ * Pick `count` distinct runes at random for a Kenning offer. When `world` and
+ * `player` are given, runes whose `available` check fails are excluded (e.g.
+ * already-owned weapon grants).
+ */
+export function rollKennings(count = 3, world?: World, player?: Entity): Rune[] {
+  const pool =
+    world !== undefined && player !== undefined
+      ? RUNES.filter((r) => r.available?.(world, player) ?? true)
+      : [...RUNES];
   // Fisher–Yates partial shuffle.
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));

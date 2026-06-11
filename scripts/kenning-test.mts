@@ -6,7 +6,7 @@ import { World, Health } from "@engine";
 import { RUNES, rollKennings, formForFullness, FormState } from "@game";
 import { createPlayer } from "@game/entities/createPlayer";
 import { Player } from "@game/components/Player";
-import { Weapon } from "@game/components/Weapon";
+import { WeaponInventory } from "@game/components/WeaponInventory";
 import { DraugrForm } from "@game/components/DraugrForm";
 
 let failures = 0;
@@ -41,13 +41,39 @@ const might0 = world.get(player, Player)!.might;
 runeById("uruz").apply(world, player);
 check("Uruz raises might by 15%", Math.abs(world.get(player, Player)!.might - might0 * 1.15) < 1e-6);
 
-const count0 = world.get(player, Weapon)!.count;
-runeById("tiwaz").apply(world, player);
-check("Tiwaz adds a projectile", world.get(player, Weapon)!.count === count0 + 1);
+const inventory = () => world.get(player, WeaponInventory)!;
 
-const cd0 = world.get(player, Weapon)!.cooldown;
+const count0 = inventory().weapons[0].count;
+runeById("tiwaz").apply(world, player);
+check("Tiwaz adds a projectile", inventory().weapons[0].count === count0 + 1);
+
+const cd0 = inventory().weapons[0].cooldown;
 runeById("sowilo").apply(world, player);
-check("Sowilo cuts cooldown", world.get(player, Weapon)!.cooldown < cd0);
+check("Sowilo cuts cooldown", inventory().weapons[0].cooldown < cd0);
+
+// --- Weapon-granting runes ---
+check("starts with one weapon", inventory().weapons.length === 1);
+check(
+  "Hagalaz offered while Scatter Shot unowned",
+  runeById("hagalaz").available!(world, player) === true,
+);
+runeById("hagalaz").apply(world, player);
+check("Hagalaz grants Scatter Shot", inventory().has("spread"));
+check(
+  "Hagalaz no longer offered once owned",
+  runeById("hagalaz").available!(world, player) === false,
+);
+const cdAll0 = inventory().weapons.map((w) => w.cooldown);
+runeById("sowilo").apply(world, player);
+check(
+  "stat runes hit every held weapon",
+  inventory().weapons.every((w, i) => w.cooldown < cdAll0[i]),
+);
+const offerFiltered = rollKennings(99, world, player);
+check(
+  "filtered roll excludes owned weapon grants",
+  !offerFiltered.some((r) => r.id === "hagalaz"),
+);
 
 const h = world.get(player, Health)!;
 h.current = 10;

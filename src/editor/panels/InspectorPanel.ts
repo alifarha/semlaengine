@@ -47,7 +47,19 @@ export class InspectorPanel extends EditorPanel {
       buildFields(
         component as Record<string, unknown>,
         nested,
-        () => this.ctx.requestRefresh(),
+        () => {
+          // The renderer blends previousPosition → position each frame, so a
+          // position edit must move both or the entity jitters between them.
+          const c = component as {
+            position?: { x: number; y: number };
+            previousPosition?: { x: number; y: number };
+          };
+          if (c.position && c.previousPosition) {
+            c.previousPosition.x = c.position.x;
+            c.previousPosition.y = c.position.y;
+          }
+          this.ctx.requestRefresh();
+        },
       );
       if (!nested.children.length) {
         const none = document.createElement("div");

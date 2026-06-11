@@ -1,4 +1,4 @@
-import { Scene, type EngineContext, type Renderer } from "@engine";
+import { Scene, type EngineContext, type Renderer, type Time } from "@engine";
 import { GameScene } from "./GameScene";
 
 export interface RunSummary {
@@ -18,6 +18,15 @@ export class GameOverScene extends Scene {
 
   onEnter(): void {
     // No systems — this scene is a static screen.
+  }
+
+  override update(time: Time): void {
+    super.update(time);
+    // Edge-triggered so a button still held from the death frame doesn't skip
+    // the results screen — the player must press again to restart.
+    if (this.ctx.input.wasPressed("Space") || this.ctx.input.wasPointerPressed()) {
+      this.ctx.scenes.change(new GameScene(this.ctx));
+    }
   }
 
   render(renderer: Renderer, _alpha: number): void {
@@ -47,11 +56,5 @@ export class GameOverScene extends Scene {
     ctx.fillStyle = "#9b9bb5";
     ctx.font = "16px system-ui, sans-serif";
     ctx.fillText("Press Space or click to play again", cx, renderer.height / 2 + 90);
-
-    // Use held-state (not edge) here: per-frame "pressed" flags are cleared
-    // during the update phase, before render runs.
-    if (this.ctx.input.isDown("Space") || this.ctx.input.pointerDown) {
-      this.ctx.scenes.change(new GameScene(this.ctx));
-    }
   }
 }

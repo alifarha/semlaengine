@@ -79,6 +79,7 @@ export class GameLoop {
     let frameTime = (timestamp - this.lastTimestamp) / 1000;
     this.lastTimestamp = timestamp;
     if (frameTime > 0.25) frameTime = 0.25;
+    this.time.frameDelta = frameTime;
 
     if (this.paused) {
       // Run only explicitly requested single steps; keep rendering otherwise so

@@ -50,6 +50,10 @@ export class Engine {
       render: (alpha) => {
         this.scenes.render(this.renderer, alpha);
         for (const overlay of this.overlays) overlay(this.renderer, alpha);
+        // While paused no fixed updates run, so flush input edges here instead
+        // — otherwise presses made during the pause pile up and replay as a
+        // burst of stale "pressed this frame" edges on the first resumed step.
+        if (this.loop.isPaused) this.input.postUpdate();
       },
     });
 

@@ -27,13 +27,20 @@ export class WeaponSystem extends System {
       const weapon = world.get(entity, Weapon)!;
       weapon.timer -= time.scaledDelta;
       if (weapon.timer > 0) continue;
-      weapon.timer = weapon.cooldown;
 
       const origin = world.get(entity, Transform)!.position;
       const player = world.get(entity, Player)!;
 
       const target = this.findNearestEnemy(world, origin);
-      if (!target) continue; // nothing to shoot at this cycle
+      if (!target) {
+        // Nothing to shoot: stay ready (don't burn a whole cooldown waiting),
+        // but don't let the timer sink further so a target's arrival can't
+        // trigger a burst of catch-up shots.
+        weapon.timer = 0;
+        continue;
+      }
+      // Carry the overshoot so the effective fire rate matches the cooldown.
+      weapon.timer += weapon.cooldown;
 
       this.aim.set(target.x - origin.x, target.y - origin.y).normalize();
       const baseAngle = this.aim.angle();

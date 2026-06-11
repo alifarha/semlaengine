@@ -57,6 +57,8 @@ export class Editor implements EditorContext {
   private readonly serializer: WorldSerializer | null;
   private visible = false;
   private _selected: Entity | null = null;
+  /** The world the selection belongs to — entity ids restart per world. */
+  private selectedWorld: World | null = null;
   private rafId = 0;
   private removeOverlay: (() => void) | null = null;
 
@@ -122,9 +124,21 @@ export class Editor implements EditorContext {
 
   select(entity: Entity | null): void {
     this._selected = entity;
+    this.selectedWorld = entity === null ? null : this.world;
     // Reflect the change immediately rather than waiting for the throttle.
     this.hierarchy.refresh();
     this.inspector.refresh();
+  }
+
+  /**
+   * Drop the selection if the scene (and thus the world) changed since it was
+   * made — the new world reuses the same entity ids, so a stale id would
+   * silently resolve to an unrelated entity.
+   */
+  private validateSelection(): void {
+    if (this._selected !== null && this.selectedWorld !== this.world) {
+      this.select(null);
+    }
   }
 
   requestRefresh(): void {
@@ -164,6 +178,15 @@ export class Editor implements EditorContext {
 
   private attachEvents(): void {
     window.addEventListener("keydown", (e) => {
+      // Don't toggle while typing in a form field (e.g. a backtick in a
+      // string editor must not close the editor).
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.matches?.("input, textarea, select") || target.isContentEditable)
+      ) {
+        return;
+      }
       if (e.code === this.toggleKey) {
         e.preventDefault();
         this.toggle();
@@ -188,6 +211,7 @@ export class Editor implements EditorContext {
 
   private loop = (): void => {
     if (!this.visible) return;
+    this.validateSelection();
     const now = performance.now();
     for (const item of this.scheduled) {
       if (now - item.last >= item.interval) {
@@ -270,7 +294,7 @@ export class Editor implements EditorContext {
   private drawSelection(): void {
     const world = this.world;
     if (!this.visible || world === null || this._selected === null) return;
-    if (!world.isAlive(this._selected)) return;
+    if (world !== this.selectedWorld || !world.isAlive(this._selected)) return;
 
     const transform = world.get(this._selected, Transform);
     if (!transform) return;

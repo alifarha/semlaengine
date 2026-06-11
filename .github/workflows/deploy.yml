@@ -7,7 +7,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["claude/great-darwin-Qw3SO"]
+    branches:
+      - "claude/great-darwin-Qw3SO"
+      - "claude/dreamy-dijkstra-ttuir0"
   workflow_dispatch: # allows a manual run from the Actions tab
 
 permissions:

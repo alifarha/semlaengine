@@ -14,6 +14,7 @@ export class InputManager {
 
   readonly pointer = new Vector2(0, 0);
   pointerDown = false;
+  private pointerPressedThisFrame = false;
 
   /**
    * When false, keyboard input is ignored and reported as released. Tooling
@@ -70,6 +71,11 @@ export class InputManager {
     return this.releasedThisFrame.has(code);
   }
 
+  /** True only on the step the pointer went down (edge, not held state). */
+  wasPointerPressed(): boolean {
+    return this.pointerPressedThisFrame;
+  }
+
   /**
    * Normalised WASD / arrow-key movement direction. Returns a fresh vector with
    * length 0 or 1 — exactly what a movement system wants.
@@ -88,6 +94,7 @@ export class InputManager {
   postUpdate(): void {
     this.pressedThisFrame.clear();
     this.releasedThisFrame.clear();
+    this.pointerPressedThisFrame = false;
   }
 
   private onKeyDown = (e: KeyboardEvent): void => {
@@ -108,6 +115,7 @@ export class InputManager {
   };
 
   private onPointerDown = (): void => {
+    if (!this.pointerDown) this.pointerPressedThisFrame = true;
     this.pointerDown = true;
   };
 
@@ -119,5 +127,7 @@ export class InputManager {
     this.down.clear();
     this.pressedThisFrame.clear();
     this.releasedThisFrame.clear();
+    this.pointerDown = false;
+    this.pointerPressedThisFrame = false;
   };
 }

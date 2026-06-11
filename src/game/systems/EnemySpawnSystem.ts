@@ -7,6 +7,7 @@ import {
   MathUtils,
 } from "@engine";
 import { Player } from "../components/Player";
+import { Enemy } from "../components/Enemy";
 import { createEnemy } from "../entities/createEnemy";
 import { ENEMY_LIST } from "../data/enemies";
 
@@ -18,8 +19,12 @@ import { ENEMY_LIST } from "../data/enemies";
 export class EnemySpawnSystem extends System {
   private timer = 0;
 
-  /** Distance beyond the player at which enemies appear. */
-  private spawnRadius = 420;
+  /**
+   * Distance from the player at which enemies appear. Must exceed the
+   * viewport's half-diagonal (~550 for 960×540 at zoom 1) or spawns on
+   * near-horizontal angles pop into view instead of arriving off-screen.
+   */
+  private spawnRadius = 620;
 
   /** Hard cap so the simulation stays performant. */
   private maxEnemies = 600;
@@ -39,7 +44,9 @@ export class EnemySpawnSystem extends System {
     if (this.timer > 0) return;
     this.timer = interval;
 
-    if (world.entityCount >= this.maxEnemies) return;
+    // Count enemies specifically — total entityCount also includes gems,
+    // projectiles, and particles, which would throttle spawning unrelatedly.
+    if (world.count(Enemy) >= this.maxEnemies) return;
 
     // Larger batches as the run progresses.
     const batch = 1 + Math.floor(minutes);

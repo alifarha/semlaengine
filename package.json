@@ -8,10 +8,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:serialization && npm run test:kenning && npm run test:boss",
+    "test": "npm run test:serialization && npm run test:kenning && npm run test:boss && npm run test:collision",
     "test:serialization": "esbuild scripts/roundtrip-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/roundtrip.mjs && node .cache/roundtrip.mjs",
     "test:kenning": "esbuild scripts/kenning-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/kenning.mjs && node .cache/kenning.mjs",
-    "test:boss": "esbuild scripts/boss-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/boss.mjs && node .cache/boss.mjs"
+    "test:boss": "esbuild scripts/boss-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/boss.mjs && node .cache/boss.mjs",
+    "test:collision": "esbuild scripts/collision-test.mts --bundle --format=esm --platform=node --alias:@engine=./src/engine --alias:@game=./src/game --outfile=.cache/collision.mjs && node .cache/collision.mjs"
   },
   "keywords": [
     "game-engine",

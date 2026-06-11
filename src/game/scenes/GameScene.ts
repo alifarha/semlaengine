@@ -2,8 +2,9 @@ import {
   Scene,
   type EngineContext,
   type Renderer,
-  type Time,
+  Time,
   Transform,
+  Vector2,
   MovementSystem,
   LifetimeSystem,
 } from "@engine";
@@ -26,7 +27,7 @@ import { Hud } from "../ui/Hud";
 import { KenningScreen } from "../ui/KenningScreen";
 import { rollKennings, type Rune } from "../data/runes";
 import { createGameEventBus, type GameEventBus } from "../events";
-import { GameOverScene } from "./GameOverScene";
+import { GameOverScene, type RunSummary } from "./GameOverScene";
 
 /**
  * The main play field. Owns the simulation pipeline and the run state.
@@ -42,6 +43,17 @@ export class GameScene extends Scene {
   private readonly hud = new Hud();
   private readonly kenningScreen = new KenningScreen();
   private playerDead = false;
+  /** Results captured the moment the player dies (the entity is reaped right after). */
+  private summary: RunSummary | null = null;
+
+  /**
+   * Run-local clock handed to the systems instead of the engine's global time.
+   * The engine clock keeps counting across menu, game-over, and Kenning pauses,
+   * so difficulty ramps, unlock/boss timers, and the survival readout all key
+   * off this clock — it starts at zero each run and only advances while the
+   * simulation actually steps.
+   */
+  private readonly runClock = new Time();
 
   /** Pending level-ups awaiting a Kenning choice; >0 freezes the simulation. */
   private pendingLevels = 0;
@@ -83,6 +95,14 @@ export class GameScene extends Scene {
     });
     this.events.on("playerDied", () => {
       this.playerDead = true;
+      // Snapshot the results now: DeathSystem destroys the player entity, so
+      // by render time its PlayerProgress is no longer queryable.
+      const progress = this.world.get(player, PlayerProgress);
+      this.summary = {
+        level: progress?.level ?? 1,
+        kills: progress?.kills ?? 0,
+        time: this.runClock.elapsed,
+      };
     });
     // Each level-up queues a Kenning choice; the choice is resolved in update().
     this.events.on("playerLeveledUp", () => {
@@ -109,17 +129,27 @@ export class GameScene extends Scene {
         this.pendingLevels--;
         this.currentOffer = null;
       }
-      return; // simulation paused until the choice is made
+      return; // simulation paused until the choice is made (run clock frozen too)
     }
 
-    super.update(time);
+    // Step the run clock in lockstep with the engine clock (same fixed delta
+    // and time scale), but only on steps the simulation actually runs.
+    this.runClock.delta = time.delta;
+    this.runClock.scale = time.scale;
+    super.update(this.runClock);
+    this.runClock.advance();
   }
 
   render(renderer: Renderer, alpha: number): void {
-    // Camera follows the player smoothly.
+    // Camera follows the player's *interpolated* position — the same one the
+    // sprite is drawn at — so the player doesn't jitter against the camera.
     const playerEntity = this.world.first(Player, Transform);
     if (playerEntity >= 0) {
-      renderer.camera.follow(this.world.get(playerEntity, Transform)!.position);
+      const t = this.world.get(playerEntity, Transform)!;
+      renderer.camera.follow(
+        Vector2.lerp(t.previousPosition, t.position, alpha),
+        this.ctx.time.frameDelta,
+      );
     }
 
     renderer.begin();
@@ -128,24 +158,15 @@ export class GameScene extends Scene {
     this.effectsRenderer.render(this.world, renderer);
     renderer.end();
 
-    this.hud.render(this.world, renderer, this.ctx.time.elapsed);
+    this.hud.render(this.world, renderer, this.runClock.elapsed);
 
     // The Kenning choice draws on top of the frozen world + HUD.
     if (this.currentOffer) {
       this.kenningScreen.render(this.currentOffer, this.ctx.input, renderer);
     }
 
-    if (this.playerDead) {
-      const progress = playerEntity >= 0
-        ? this.world.get(playerEntity, PlayerProgress)
-        : undefined;
-      this.ctx.scenes.change(
-        new GameOverScene(this.ctx, {
-          level: progress?.level ?? 1,
-          kills: progress?.kills ?? 0,
-          time: this.ctx.time.elapsed,
-        }),
-      );
+    if (this.playerDead && this.summary) {
+      this.ctx.scenes.change(new GameOverScene(this.ctx, this.summary));
     }
   }
 }

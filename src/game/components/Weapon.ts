@@ -26,10 +26,11 @@ export class Weapon implements Component {
   /** Projectiles launched per shot. */
   count: number;
 
+  // Defaults mirror the "bolt" blueprint in data/weapons.ts.
   constructor(opts: Partial<Weapon> = {}) {
-    this.cooldown = opts.cooldown ?? 0.8;
+    this.cooldown = opts.cooldown ?? 0.7;
     this.damage = opts.damage ?? 10;
-    this.projectileSpeed = opts.projectileSpeed ?? 260;
+    this.projectileSpeed = opts.projectileSpeed ?? 280;
     this.projectileLifetime = opts.projectileLifetime ?? 1.4;
     this.pierce = opts.pierce ?? 1;
     this.count = opts.count ?? 1;

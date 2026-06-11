@@ -28,9 +28,18 @@ export abstract class EditorPanel {
     this.element.append(header, this.body);
   }
 
-  /** True if focus is inside this panel (user is interacting with an input). */
+  /**
+   * True if the user is mid-edit in a form control inside this panel. Only
+   * typing controls count: browsers also focus buttons on click, and treating
+   * that as "editing" would swallow the very refresh the click triggered.
+   */
   protected hasFocusWithin(): boolean {
-    return this.element.contains(document.activeElement);
+    const active = document.activeElement;
+    return (
+      active instanceof HTMLElement &&
+      this.element.contains(active) &&
+      active.matches("input, textarea, select")
+    );
   }
 
   /** Called repeatedly while the editor is visible to reflect live state. */

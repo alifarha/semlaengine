@@ -109,6 +109,13 @@ export class World {
     return [...this.query(...ctors)];
   }
 
+  /** Number of entities that have all of the given component types. */
+  count(...ctors: ComponentClass[]): number {
+    let n = 0;
+    for (const _ of this.query(...ctors)) n++;
+    return n;
+  }
+
   /** First entity matching the query, or NULL_ENTITY. Useful for singletons. */
   first(...ctors: ComponentClass[]): Entity {
     for (const entity of this.query(...ctors)) return entity;

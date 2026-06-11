@@ -13,6 +13,13 @@ export class Time {
   /** Fixed timestep duration in seconds (e.g. 1/60). */
   delta = 1 / 60;
 
+  /**
+   * Real seconds since the previous rendered frame (clamped). Unlike `delta`
+   * this varies with display refresh rate — use it for render-phase smoothing
+   * (e.g. camera follow) so the result is frame-rate independent.
+   */
+  frameDelta = 0;
+
   /** Number of fixed updates run so far. */
   frame = 0;
 

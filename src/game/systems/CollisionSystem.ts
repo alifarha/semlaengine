@@ -28,6 +28,13 @@ export class CollisionSystem extends System {
   private readonly grid = new SpatialHashGrid(48);
   private readonly candidates: Entity[] = [];
 
+  /**
+   * Largest enemy collider inserted this step. The grid stores enemies by
+   * centre point, so queries must be padded by the biggest radius present or
+   * large enemies (bosses) near a cell boundary slip through unhit.
+   */
+  private maxEnemyRadius = 0;
+
   constructor(private readonly events: GameEventBus) {
     super();
   }
@@ -40,9 +47,12 @@ export class CollisionSystem extends System {
 
   private rebuildEnemyGrid(world: World): void {
     this.grid.clear();
+    this.maxEnemyRadius = 0;
     for (const enemy of world.query(Enemy, Transform)) {
       const pos = world.get(enemy, Transform)!.position;
       this.grid.insert(enemy, pos.x, pos.y);
+      const r = world.get(enemy, CircleCollider)?.radius ?? 0;
+      if (r > this.maxEnemyRadius) this.maxEnemyRadius = r;
     }
   }
 
@@ -52,15 +62,18 @@ export class CollisionSystem extends System {
       const pos = world.get(proj, Transform)!.position;
       const radius = world.get(proj, CircleCollider)!.radius;
 
-      this.grid.queryCircle(pos.x, pos.y, radius + 16, this.candidates);
+      this.grid.queryCircle(pos.x, pos.y, radius + this.maxEnemyRadius, this.candidates);
       for (const enemy of this.candidates) {
         if (!world.isAlive(enemy)) continue;
+        if (projectile.hitEnemies.has(enemy)) continue; // pierced through already
+        const health = world.get(enemy, Health);
+        if (health && health.current <= 0) continue; // dead, awaiting reaping
         const enemyPos = world.get(enemy, Transform)!.position;
         const enemyRadius = world.get(enemy, CircleCollider)!.radius;
         const reach = radius + enemyRadius;
         if (pos.distanceToSq(enemyPos) > reach * reach) continue;
 
-        const health = world.get(enemy, Health);
+        projectile.hitEnemies.add(enemy);
         if (health) health.current -= projectile.damage;
 
         this.events.emit("enemyDamaged", {
@@ -92,8 +105,10 @@ export class CollisionSystem extends System {
     const pos = world.get(playerEntity, Transform)!.position;
     const radius = world.get(playerEntity, CircleCollider)!.radius;
 
-    this.grid.queryCircle(pos.x, pos.y, radius + 16, this.candidates);
+    this.grid.queryCircle(pos.x, pos.y, radius + this.maxEnemyRadius, this.candidates);
     for (const enemy of this.candidates) {
+      const enemyHealth = world.get(enemy, Health);
+      if (enemyHealth && enemyHealth.current <= 0) continue; // dead enemies don't bite
       const enemyPos = world.get(enemy, Transform)!.position;
       const enemyRadius = world.get(enemy, CircleCollider)!.radius;
       const reach = radius + enemyRadius;

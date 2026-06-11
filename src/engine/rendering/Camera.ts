@@ -11,8 +11,8 @@ export class Camera {
   readonly position = new Vector2(0, 0);
   zoom = 1;
 
-  /** How quickly the camera catches up to its target, per second [0,1]. */
-  followLerp = 0.12;
+  /** Follow catch-up rate per second; higher snaps faster. */
+  followRate = 8;
 
   /**
    * Screen-shake "trauma" in [0,1]. Effects add trauma on impactful events; it
@@ -50,9 +50,13 @@ export class Camera {
     return this.trauma * this.trauma * this.maxShakeOffset;
   }
 
-  /** Smoothly move the camera centre toward `target`. */
-  follow(target: Vector2, smoothing = this.followLerp): void {
-    const t = clamp(smoothing, 0, 1);
+  /**
+   * Smoothly move the camera centre toward `target`. `dt` is the elapsed time
+   * since the last call (e.g. `Time.frameDelta`); the exponential form makes
+   * the catch-up speed identical on a 60Hz and a 144Hz display.
+   */
+  follow(target: Vector2, dt: number, rate = this.followRate): void {
+    const t = clamp(1 - Math.exp(-rate * dt), 0, 1);
     this.position.x += (target.x - this.position.x) * t;
     this.position.y += (target.y - this.position.y) * t;
   }
